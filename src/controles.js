@@ -1,43 +1,27 @@
 'use strict';
-// Controles multimedia y lectura de "Now Playing" (GSMTC) en Windows vía PowerShell (sin dependencias).
+// Controles multimedia (GSMTC + WScript.Shell) y lectura de "Now Playing" en Windows vía PowerShell.
 
 const path = require('path');
 const { execFile } = require('child_process');
 
-const MEDIA_SCRIPT = path.join(__dirname, 'media-info.ps1');
+const MEDIA_INFO_SCRIPT = path.join(__dirname, 'media-info.ps1');
+const MEDIA_ACTION_SCRIPT = path.join(__dirname, 'media-action.ps1');
 
-// Virtual-Key codes de Windows para teclas multimedia
-const TECLAS = {
-  playPause: 0xB3, // VK_MEDIA_PLAY_PAUSE
-  next: 0xB0,      // VK_MEDIA_NEXT_TRACK
-  prev: 0xB1,      // VK_MEDIA_PREV_TRACK
-  volUp: 0xAF,     // VK_VOLUME_UP
-  volDown: 0xAE,   // VK_VOLUME_DOWN
-  mute: 0xAD,      // VK_VOLUME_MUTE
-};
+const ACCIONES = new Set(['playPause', 'next', 'prev', 'volUp', 'volDown', 'mute']);
 
 function enviarTecla(accion) {
   return new Promise((resolver) => {
-    const vk = TECLAS[accion];
-    if (!vk) return resolver({ ok: false, error: 'Acción desconocida' });
+    if (!ACCIONES.has(accion)) return resolver({ ok: false, error: 'Acción desconocida' });
     if (process.platform !== 'win32') return resolver({ ok: false, error: 'Solo soportado en Windows' });
-
-    const script = [
-      'Add-Type -TypeDefinition @"',
-      'using System.Runtime.InteropServices;',
-      'public class MediaKey {',
-      '  [DllImport("user32.dll")] public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, System.UIntPtr dwExtraInfo);',
-      '}',
-      '"@',
-      `[MediaKey]::keybd_event(${vk}, 0, 0, [System.UIntPtr]::Zero)`,
-      `[MediaKey]::keybd_event(${vk}, 0, 2, [System.UIntPtr]::Zero)`,
-    ].join('\n');
 
     execFile(
       'powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-Command', script],
-      { timeout: 5000, windowsHide: true },
-      (err) => resolver({ ok: !err, error: err ? err.message : null })
+      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', MEDIA_ACTION_SCRIPT, '-Action', accion],
+      { timeout: 6000, windowsHide: true },
+      (err, stdout, stderr) => {
+        if (err) return resolver({ ok: false, error: (stderr || err.message || '').trim() });
+        resolver({ ok: true });
+      }
     );
   });
 }
@@ -49,7 +33,7 @@ function leerMediaActual() {
   return new Promise((resolver) => {
     execFile(
       'powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', MEDIA_SCRIPT],
+      ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', MEDIA_INFO_SCRIPT],
       { timeout: 6000, windowsHide: true },
       (err, stdout) => {
         leyendoMedia = false;
@@ -63,7 +47,7 @@ function leerMediaActual() {
             titulo: String(obj.title || '').trim(),
             artista: String(obj.artist || '').trim(),
             album: String(obj.album || '').trim(),
-            estado: String(obj.status || '').trim(), // Playing, Paused, etc.
+            estado: String(obj.status || '').trim(),
             app: String(obj.app || '').replace(/\.exe$/i, '').split('!')[0],
           });
         } catch (e) {
@@ -74,4 +58,4 @@ function leerMediaActual() {
   });
 }
 
-module.exports = { enviarTecla, leerMediaActual, TECLAS };
+module.exports = { enviarTecla, leerMediaActual };

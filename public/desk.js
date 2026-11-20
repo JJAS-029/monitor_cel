@@ -213,11 +213,11 @@
   function metrica(nombre, valor, pct, clase) {
     const w = Math.max(0, Math.min(100, pct || 0));
     return `<div class="metrica"><span class="nom">${esc(nombre)}</span>` +
-      `<div class="medidor"><i class="${clase || ''}" style="width:${w}%"></i></div>` +
+      `<div class="wavy-track"><i class="${clase || ''}" style="width:${w}%"></i></div>` +
       `<span class="val">${esc(valor)}</span></div>`;
   }
 
-  // ---------- Pintar Antigravity (diferenciado por color) ----------
+  // ---------- Pintar Antigravity (diferenciado por color, con líneas senoidales M3 Expressive) ----------
   function pintarAntigravity(ag) {
     const badge = $('agy-badge');
     const body = $('agy-body');
@@ -232,7 +232,7 @@
         const sub = m.reinicio ? `Reinicia ${faltaPara(m.reinicio)}` : '';
         return `<div class="agy-item">` +
           `<div class="agy-top"><b>${esc(m.nombre)}</b><span>${rest}%</span></div>` +
-          `<div class="medidor"><i class="${col}" style="width:${rest}%"></i></div>` +
+          `<div class="wavy-track"><i class="${col}" style="width:${rest}%"></i></div>` +
           (sub ? `<div class="agy-sub">${esc(sub)}</div>` : '') +
           `</div>`;
       }).join('');
@@ -294,9 +294,11 @@
     $('pc-body').innerHTML = html;
   }
 
-  // ---------- Pintar Música (Now Playing) ----------
+  // ---------- Pintar Música (Now Playing con Cookie Shape + Onda senoidal) ----------
   function pintarMedia(media) {
     const icon = $('np-icon');
+    const glyph = $('np-glyph');
+    const wave = $('np-wave');
     const title = $('np-title');
     const artist = $('np-artist');
     const btnPlay = $('btn-playpause');
@@ -304,14 +306,16 @@
 
     if (media && (media.titulo || media.artista)) {
       const playing = media.estado === 'Playing';
-      icon.classList.toggle('playing', playing);
-      icon.textContent = playing ? '🎶' : '⏸️';
+      if (icon) icon.classList.toggle('playing', playing);
+      if (glyph) glyph.textContent = playing ? '🎶' : '⏸️';
+      if (wave) wave.classList.toggle('playing', playing);
       title.textContent = media.titulo || 'Reproduciendo…';
       artist.textContent = [media.artista, media.album, media.app].filter(Boolean).join(' · ');
       if (btnPlay) btnPlay.innerHTML = playing ? '⏸<span>Pausar</span>' : '▶️<span>Reproducir</span>';
     } else {
-      icon.classList.remove('playing');
-      icon.textContent = '🎵';
+      if (icon) icon.classList.remove('playing');
+      if (glyph) glyph.textContent = '🎵';
+      if (wave) wave.classList.remove('playing');
       title.textContent = 'Sin música activa';
       artist.textContent = 'Reproduce Spotify, YouTube o VLC en tu PC';
       if (btnPlay) btnPlay.innerHTML = '⏯<span>Play/Pausa</span>';

@@ -87,14 +87,52 @@ function parsearSalidaAgy(stdout) {
 
   if (json && typeof json === 'object') {
     plan = json.plan || json.tier || json.planName || (json.account && json.account.plan) || null;
-    const posiblesArrays = [
-      json.models, json.quotas, json.buckets, json.usage, json.limits,
-      json.data && json.data.models, json.data && json.data.quotas,
-      json.result && json.result.models, json.result && json.result.quotas,
-    ].filter(Array.isArray);
-    for (const arr of posiblesArrays) extraerLista(arr);
 
-    // Si `result` o `response` o `text` trae texto formateado con porcentajes (cuando -p /usage envuelve texto en JSON)
+    // Formato oficial de `agy -p /usage --output-format json`: command.data.groups[].buckets[]
+    const grupos = json.command && json.command.data && Array.isArray(json.command.data.groups)
+      ? json.command.data.groups
+      : (Array.isArray(json.groups) ? json.groups : null);
+
+    if (grupos) {
+      const etiquetaVentana = (w, nombreBucket) => {
+        if (w === '5h') return '5 h';
+        if (w === 'weekly') return 'Semana';
+        if (/5-?hour|five hour/i.test(nombreBucket || '')) return '5 h';
+        if (/weekly/i.test(nombreBucket || '')) return 'Semana';
+        return w || nombreBucket || '';
+      };
+      for (const g of grupos) {
+        if (!g || !Array.isArray(g.buckets)) continue;
+        const grupoNombre = String(g.name || 'Antigravity').replace(/\s+models$/i, '');
+        // Ordenar 5h primero y luego weekly para lectura rápida
+        const ordenados = g.buckets.slice().sort((a, b) => (a.window === '5h' ? -1 : b.window === '5h' ? 1 : 0));
+        for (const b of ordenados) {
+          const rest = normalizarPorcentaje(b.remaining_fraction ?? b.remainingFraction);
+          if (rest == null) continue;
+          const vent = etiquetaVentana(b.window, b.name);
+          modelos.push({
+            nombre: vent ? `${grupoNombre} · ${vent}` : grupoNombre,
+            grupo: g.name || grupoNombre,
+            ventana: b.window || null,
+            restantePct: rest,
+            usadoPct: 100 - rest,
+            reinicio: normalizarReinicio(b.reset_time || b.resetTime),
+            estado: b.description || null,
+          });
+        }
+      }
+    }
+
+    if (!modelos.length) {
+      const posiblesArrays = [
+        json.models, json.quotas, json.buckets, json.usage, json.limits,
+        json.data && json.data.models, json.data && json.data.quotas,
+        json.result && json.result.models, json.result && json.result.quotas,
+      ].filter(Array.isArray);
+      for (const arr of posiblesArrays) extraerLista(arr);
+    }
+
+    // Si `result` o `response` o `text` trae texto formateado con porcentajes
     const textoInterno = typeof json.response === 'string' ? json.response
       : typeof json.result === 'string' ? json.result
       : typeof json.text === 'string' ? json.text

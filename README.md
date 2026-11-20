@@ -26,6 +26,15 @@ Panel de escritorio independiente para celular Android (pensado para el **Moto G
 - **Iniciar manualmente sin ventana:** doble clic a `iniciar-koala.vbs` (guarda los logs en `koala-desk.log`).
 - **Iniciar manualmente con consola visible:** doble clic a `iniciar-koala.bat` (útil para ver la IP local o depurar).
 
+## Activar hooks de trabajo para Antigravity (animación del Koala)
+
+Para que el Koala saque su laptop, teclee mientras Antigravity trabaja y te avise cuando termine un turno largo, ejecuta una sola vez:
+
+```powershell
+node scripts/instalar-hooks-antigravity.js
+```
+*(O dale doble clic a `instalar-hooks-antigravity.bat`).* Esto registra el hook `koala-monitor` en `~/.gemini/config/hooks.json` usando el mismo `~/.claude/koala-estado.json` que Claude Code.
+
 ## Activar cuotas de Antigravity (modelos restantes)
 
 El panel consulta el CLI oficial de Antigravity (`agy -p /usage --output-format json`). Para activarlo en Windows:

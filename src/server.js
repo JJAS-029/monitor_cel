@@ -278,9 +278,17 @@ function leerEstadoClaude() {
   const necesita = datos.estado === 'necesita' && fresco ? { mensaje: datos.mensaje || '', ts: datos.ts } : null;
   if (necesita && nuevo && !primera) {
     animar('pedirAtencion', necesita);
-    notificar(`🐨✋ Claude te necesita${necesita.mensaje ? ': ' + necesita.mensaje : ''}`);
+    notificar(`🐨✋ Te necesitan${necesita.mensaje ? ': ' + necesita.mensaje : ''}`);
   }
   if (!!necesita !== !!claudeNecesita) { claudeNecesita = necesita; enviarEstado(); }
+
+  if (datos.estado === 'descanso' && nuevo && !primera && datos.duracion >= 45000) {
+    const seg = Math.round(datos.duracion / 1000);
+    const durTxt = seg >= 60 ? `${Math.floor(seg / 60)} min ${seg % 60} s` : `${seg} s`;
+    const quien = datos.fuente === 'antigravity' ? 'Antigravity' : 'Claude';
+    animar('claudeListo', { duracion: datos.duracion });
+    notificar(`🐨📜 ${quien} terminó (${durTxt})`);
+  }
 
   clearTimeout(temporizadorClaude);
   const vigente = (datos.estado === 'trabajando' || datos.estado === 'necesita') && fresco;

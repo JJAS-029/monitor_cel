@@ -1,8 +1,8 @@
 'use strict';
 // Hook oficial de Antigravity para Koala Desk Monitor (y compatible con koala_monitor en VS Code).
 // Uso: node scripts/koala-hook.js trabajando|descanso
-// Escribe ~/.claude/koala-estado-antigravity.json (independiente de Claude Code) y refleja en
-// ~/.claude/koala-estado.json solo si Claude Code no está activo, para no pisar su estado.
+// Escribe solo ~/.claude/koala-estado-antigravity.json: el servidor y el koala de VS Code (desde la 1.9.0) lo leen
+// directo. Ya no se copia a ~/.claude/koala-estado.json, que es de Claude Code (la copia le movía la hora de inicio).
 
 const fs = require('fs');
 const os = require('os');
@@ -10,8 +10,6 @@ const path = require('path');
 
 const DIR = path.join(os.homedir(), '.claude');
 const RUTA_AGY = path.join(DIR, 'koala-estado-antigravity.json');
-const RUTA_CLAUDE = path.join(DIR, 'koala-estado.json');
-const TURNO_MAXIMO_MS = 15 * 60 * 1000;
 const estado = process.argv[2] || 'trabajando';
 
 function leerJson(ruta) {
@@ -43,14 +41,6 @@ try {
 
   escribirAtomico(RUTA_AGY, datos);
 
-  // Reflejar a VS Code (koala-estado.json) solo si Claude Code no está trabajando activamente
-  const claude = leerJson(RUTA_CLAUDE);
-  const claudeActivo = claude.fuente !== 'antigravity' &&
-    (claude.estado === 'trabajando' || claude.estado === 'necesita') &&
-    (ahora - (claude.ts || 0) < TURNO_MAXIMO_MS);
-  if (!claudeActivo) {
-    escribirAtomico(RUTA_CLAUDE, datos);
-  }
 } catch (e) {
   // Nunca bloquear al agente
 }

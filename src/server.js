@@ -24,6 +24,7 @@ const CONFIG_LOCAL_PATH = path.join(__dirname, '..', 'config.json');
 
 const DIR_CLAUDE = path.join(os.homedir(), '.claude');
 const RUTA_ESTADO_CLAUDE = path.join(DIR_CLAUDE, 'koala-estado.json');
+const RUTA_ESTADO_AGY = path.join(DIR_CLAUDE, 'koala-estado-antigravity.json');
 const RUTA_USO = path.join(DIR_CLAUDE, 'koala-uso.json');
 const DIR_PROYECTOS = path.join(DIR_CLAUDE, 'projects');
 const RUTA_COMPARTIDO = path.join(DIR_CLAUDE, 'koala', 'compartido.json');
@@ -139,9 +140,14 @@ let necesidades = { saciedad: 80, animo: 80, energia: 80 };
 let durmiendo = false;
 let ultimoTick = Date.now();
 let claudeTrabajando = false;
+let antigravityTrabajando = false;
 let claudeNecesita = null;
 let ultimoTsClaude = 0;
+let ultimoTsAgy = 0;
 let temporizadorClaude = null;
+let temporizadorAgy = null;
+
+const alguienTrabajando = () => claudeTrabajando || antigravityTrabajando;
 
 let usoOficial = null;
 let usoApi = null;
@@ -213,14 +219,14 @@ function tick() {
   necesidades.animo = limitar(necesidades.animo - (hambre ? 10 : 7) * horas);
   if (!sincronizarEnergia()) {
     if (durmiendo) necesidades.energia = limitar(necesidades.energia + 600 * horas);
-    else necesidades.energia = limitar(necesidades.energia - (claudeTrabajando ? 12 : 6) * horas);
+    else necesidades.energia = limitar(necesidades.energia - (alguienTrabajando() ? 12 : 6) * horas);
   }
   const ligada = energiaDeSesion() !== null;
   const despierta = ligada
-    ? necesidades.energia >= 60 || claudeTrabajando || pomodoro.fase() === 'enfoque'
-    : necesidades.energia >= 100 || (claudeTrabajando && necesidades.energia >= 50);
+    ? necesidades.energia >= 60 || alguienTrabajando() || pomodoro.fase() === 'enfoque'
+    : necesidades.energia >= 100 || (alguienTrabajando() && necesidades.energia >= 50);
   if (durmiendo && despierta) durmiendo = false;
-  else if (!durmiendo && necesidades.energia < 22 && !claudeTrabajando && !pomodoro.fase()) durmiendo = true;
+  else if (!durmiendo && necesidades.energia < 22 && !alguienTrabajando() && !pomodoro.fase()) durmiendo = true;
   guardarEstado();
   enviarEstado();
 }
@@ -266,28 +272,30 @@ const rutina = crearRutina({
   config,
 });
 
-// ---------- Lectura de Claude Code ----------
+// ---------- Lectura de Claude Code y Antigravity (independientes) ----------
 function leerEstadoClaude() {
   let datos = null;
   try { datos = JSON.parse(fs.readFileSync(RUTA_ESTADO_CLAUDE, 'utf8')); } catch (e) { return; }
+  // Ignorar si fue un espejo escrito por Antigravity (lo leemos directo de RUTA_ESTADO_AGY)
+  if (datos.fuente === 'antigravity') return;
+
   const nuevo = datos.ts && datos.ts !== ultimoTsClaude;
   const primera = ultimoTsClaude === 0;
   ultimoTsClaude = datos.ts || ultimoTsClaude;
   const fresco = Date.now() - (datos.ts || 0) < TURNO_MAXIMO_MS;
 
-  const necesita = datos.estado === 'necesita' && fresco ? { mensaje: datos.mensaje || '', ts: datos.ts } : null;
+  const necesita = datos.estado === 'necesita' && fresco ? { mensaje: datos.mensaje || '', ts: datos.ts, quien: 'Claude' } : null;
   if (necesita && nuevo && !primera) {
     animar('pedirAtencion', necesita);
-    notificar(`🐨✋ Te necesitan${necesita.mensaje ? ': ' + necesita.mensaje : ''}`);
+    notificar(`🐨✋ Claude te necesita${necesita.mensaje ? ': ' + necesita.mensaje : ''}`);
   }
   if (!!necesita !== !!claudeNecesita) { claudeNecesita = necesita; enviarEstado(); }
 
   if (datos.estado === 'descanso' && nuevo && !primera && datos.duracion >= 45000) {
     const seg = Math.round(datos.duracion / 1000);
     const durTxt = seg >= 60 ? `${Math.floor(seg / 60)} min ${seg % 60} s` : `${seg} s`;
-    const quien = datos.fuente === 'antigravity' ? 'Antigravity' : 'Claude';
-    animar('claudeListo', { duracion: datos.duracion });
-    notificar(`🐨📜 ${quien} terminó (${durTxt})`);
+    animar('claudeListo', { duracion: datos.duracion, quien: 'Claude' });
+    notificar(`🐨📜 Claude terminó (${durTxt})`);
   }
 
   clearTimeout(temporizadorClaude);
@@ -296,6 +304,29 @@ function leerEstadoClaude() {
     temporizadorClaude = setTimeout(() => { claudeTrabajando = false; enviarEstado(); }, TURNO_MAXIMO_MS - (Date.now() - datos.ts));
   }
   if (vigente !== claudeTrabajando) { claudeTrabajando = vigente; enviarEstado(); }
+}
+
+function leerEstadoAntigravity() {
+  let datos = null;
+  try { datos = JSON.parse(fs.readFileSync(RUTA_ESTADO_AGY, 'utf8')); } catch (e) { return; }
+  const nuevo = datos.ts && datos.ts !== ultimoTsAgy;
+  const primera = ultimoTsAgy === 0;
+  ultimoTsAgy = datos.ts || ultimoTsAgy;
+  const fresco = Date.now() - (datos.ts || 0) < TURNO_MAXIMO_MS;
+
+  if (datos.estado === 'descanso' && nuevo && !primera && datos.duracion >= 45000) {
+    const seg = Math.round(datos.duracion / 1000);
+    const durTxt = seg >= 60 ? `${Math.floor(seg / 60)} min ${seg % 60} s` : `${seg} s`;
+    animar('claudeListo', { duracion: datos.duracion, quien: 'Antigravity' });
+    notificar(`🐨📜 Antigravity terminó (${durTxt})`);
+  }
+
+  clearTimeout(temporizadorAgy);
+  const vigente = (datos.estado === 'trabajando' || datos.estado === 'necesita') && fresco;
+  if (vigente) {
+    temporizadorAgy = setTimeout(() => { antigravityTrabajando = false; enviarEstado(); }, TURNO_MAXIMO_MS - (Date.now() - datos.ts));
+  }
+  if (vigente !== antigravityTrabajando) { antigravityTrabajando = vigente; enviarEstado(); }
 }
 
 function leerUsoOficial() {
@@ -451,8 +482,9 @@ function construirEstado() {
     tipo: 'estado',
     necesidades,
     durmiendo,
-    trabajando: claudeTrabajando,
+    trabajando: alguienTrabajando(),
     claude: claudeTrabajando,
+    antigravityActivo: antigravityTrabajando,
     uso,
     antigravity: {
       estado: antigravityData.estado,
@@ -474,7 +506,7 @@ function construirEstado() {
       planUsd: config().get('costoPlanMensualUSD', 0),
     }),
     claudeNecesita,
-    inactivoMin: claudeTrabajando ? 0 : Math.floor((Date.now() - inicioServidor) / 60000),
+    inactivoMin: alguienTrabajando() ? 0 : Math.floor((Date.now() - inicioServidor) / 60000),
     minutosSiesta: config().get('minutosParaSiesta', 20),
     minutosTreparse: config().get('minutosParaTreparse', 120),
     temporada: temporada(),
@@ -649,6 +681,7 @@ function obtenerIpsLocales() {
 cargarEstado();
 leerUsoOficial();
 leerEstadoClaude();
+leerEstadoAntigravity();
 consumo.escanearTranscripciones();
 medirSistema();
 medirMedia();
@@ -659,6 +692,7 @@ consultarAntigravity(true);
 
 fs.watchFile(RUTA_USO, { interval: 2000 }, leerUsoOficial);
 fs.watchFile(RUTA_ESTADO_CLAUDE, { interval: 1000 }, leerEstadoClaude);
+fs.watchFile(RUTA_ESTADO_AGY, { interval: 1000 }, leerEstadoAntigravity);
 
 setInterval(tick, 60000);
 setInterval(() => pomodoro.revisar(Date.now(), lider.esLider()), 1000);

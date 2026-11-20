@@ -1,26 +1,32 @@
 'use strict';
-// Hook oficial de Antigravity (y compatible con Claude Code) para Koala Desk Monitor.
+// Hook oficial de Antigravity para Koala Desk Monitor (y compatible con koala_monitor en VS Code).
 // Uso: node scripts/koala-hook.js trabajando|descanso
-// Escribe ~/.claude/koala-estado.json y siempre devuelve {} en stdout sin bloquear nunca al agente.
+// Escribe ~/.claude/koala-estado-antigravity.json (independiente de Claude Code) y refleja en
+// ~/.claude/koala-estado.json solo si Claude Code no está activo, para no pisar su estado.
 
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const RUTA = path.join(os.homedir(), '.claude', 'koala-estado.json');
+const DIR = path.join(os.homedir(), '.claude');
+const RUTA_AGY = path.join(DIR, 'koala-estado-antigravity.json');
+const RUTA_CLAUDE = path.join(DIR, 'koala-estado.json');
+const TURNO_MAXIMO_MS = 15 * 60 * 1000;
 const estado = process.argv[2] || 'trabajando';
 
-function leerPrevio() {
-  try {
-    return JSON.parse(fs.readFileSync(RUTA, 'utf8')) || {};
-  } catch (e) {
-    return {};
-  }
+function leerJson(ruta) {
+  try { return JSON.parse(fs.readFileSync(ruta, 'utf8')) || {}; } catch (e) { return {}; }
+}
+function escribirAtomico(ruta, datos) {
+  fs.mkdirSync(path.dirname(ruta), { recursive: true });
+  const tmp = `${ruta}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(datos));
+  fs.renameSync(tmp, ruta);
 }
 
 try {
   const ahora = Date.now();
-  const previo = leerPrevio();
+  const previo = leerJson(RUTA_AGY);
   const datos = {
     estado,
     ts: ahora,
@@ -35,10 +41,16 @@ try {
     datos.duracion = Math.max(0, ahora - previo.inicio);
   }
 
-  fs.mkdirSync(path.dirname(RUTA), { recursive: true });
-  const tmp = `${RUTA}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(datos));
-  fs.renameSync(tmp, RUTA);
+  escribirAtomico(RUTA_AGY, datos);
+
+  // Reflejar a VS Code (koala-estado.json) solo si Claude Code no está trabajando activamente
+  const claude = leerJson(RUTA_CLAUDE);
+  const claudeActivo = claude.fuente !== 'antigravity' &&
+    (claude.estado === 'trabajando' || claude.estado === 'necesita') &&
+    (ahora - (claude.ts || 0) < TURNO_MAXIMO_MS);
+  if (!claudeActivo) {
+    escribirAtomico(RUTA_CLAUDE, datos);
+  }
 } catch (e) {
   // Nunca bloquear al agente
 }

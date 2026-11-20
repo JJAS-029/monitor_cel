@@ -308,7 +308,11 @@
     cola.push(esperar(1, {
       libre: true,
       ini() {
-        k.texto = est.claude ? T('Claude está trabajando: el koala toma notas') : T('Trabajando contigo');
+        k.texto = (est.claude && est.antigravityActivo)
+          ? T('Claude y Antigravity están trabajando: el koala toma notas')
+          : est.antigravityActivo ? T('Antigravity está trabajando: el koala toma notas')
+          : est.claude ? T('Claude está trabajando: el koala toma notas')
+          : T('Trabajando contigo');
         const u = usoMaximo();
         const al = alertaMayor();
         k.sudor = u >= 75 || !!(al && al.nivel >= 2);
@@ -1454,7 +1458,7 @@
   function claudeListo(d) {
     sonar('listo');
     cola.push(
-      esperar(0.3, { ini() { posturaBase(); k.mirar = 0; k.ojos = 'felices'; k.texto = '📜 ' + T('¡Claude terminó! ({0})', duracionCorta(d.duracion)); } }),
+      esperar(0.3, { ini() { posturaBase(); k.mirar = 0; k.ojos = 'felices'; const q = (d && d.quien) || 'Claude'; k.texto = '📜 ¡' + q + ' terminó! (' + duracionCorta(d.duracion) + ')'; } }),
       ...salto(14, 0.4, { ini() { ponerPose('estirado'); k.brazos = 'arriba-der'; k.sosteniendo = 'papel'; } }),
       esperar(2.2, {
         ini() { k.brazos = 'arriba-der'; k.sosteniendo = 'papel'; ponerPose('frente'); },
@@ -2516,7 +2520,7 @@
     const m = e.data;
     if (!m) return;
     if (m.tipo === 'estado') {
-      const antes = { trabajando: est.trabajando, durmiendo: est.durmiendo, necesita: !!est.claudeNecesita, siesta: enSiesta(),
+      const antes = { trabajando: est.trabajando, claude: !!est.claude, agy: !!est.antigravityActivo, durmiendo: est.durmiendo, necesita: !!est.claudeNecesita, siesta: enSiesta(),
         fase: est.pomodoro ? est.pomodoro.fase + ':' + est.pomodoro.pausado : '' };
       est = Object.assign(est, m);
       pintarNecesidades();
@@ -2527,7 +2531,7 @@
       pomoRecibido = Date.now();
       pintarPomodoroDom();
       const fase = est.pomodoro ? est.pomodoro.fase + ':' + est.pomodoro.pausado : '';
-      if (antes.trabajando !== est.trabajando || antes.durmiendo !== est.durmiendo || antes.fase !== fase || antes.necesita !== !!est.claudeNecesita || antes.siesta !== enSiesta()) interrumpir();
+      if (antes.trabajando !== est.trabajando || antes.claude !== !!est.claude || antes.agy !== !!est.antigravityActivo || antes.durmiendo !== est.durmiendo || antes.fase !== fase || antes.necesita !== !!est.claudeNecesita || antes.siesta !== enSiesta()) interrumpir();
     } else if (m.tipo === 'accion') {
       if (m.datos) datosAccion[m.accion] = m.datos;
       pendientes.push(m.accion);

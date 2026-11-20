@@ -467,6 +467,7 @@ async function vigilarCommits() {
     ultimoCommitRepo.set(r.dir, head.hash);
     // Commit nuevo y reciente (menos de 5 min): el koala come y festeja automáticamente
     if (commitsInicializados && previo && previo !== head.hash && (Date.now() - head.ts < 5 * 60000)) {
+      if (!lider.esLider()) continue; // VS Code (líder) ya lo festejó y el estado llega por compartido.json
       necesidades.saciedad = limitar(necesidades.saciedad + 30);
       necesidades.animo = limitar(necesidades.animo + 10);
       if (durmiendo) durmiendo = false;
@@ -585,6 +586,9 @@ function construirEstado() {
     hoy: consumo.resumenHoy(),
     sistema,
     media: mediaActual,
+    musica: mediaActual && mediaActual.titulo
+      ? { titulo: mediaActual.titulo, artista: mediaActual.artista || '', app: mediaActual.app || '', sonando: mediaActual.estado === 'Playing' }
+      : null,
     servicios,
     alertas: calcularAlertas(uso),
     costos: consumo.resumenCostos({

@@ -1,5 +1,7 @@
 # Mismo koala en VS Code y en el celular
 
+> **Estado: ✅ Aplicadas** (20 nov. 2026): audífonos y baile con música, traducción de «¡Antigravity terminó!» y guardia `!lider.esLider()` para evitar contar commits doble.
+
 El koala de VS Code ([koala_monitor](https://github.com/JJAS-029/koala_monitor)) y el de este panel comparten su
 estado en `~/.claude/koala/compartido.json`, así que conviene que tengan las mismas animaciones y que calculen igual.
 Comparación hecha el 20 nov. 2026: `public/koala.js` de este repo (commit `00389d5`) contra `media/koala.js` de

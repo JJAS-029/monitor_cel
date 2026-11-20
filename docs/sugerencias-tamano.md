@@ -1,5 +1,7 @@
 # Sugerencias de tamaño para el Moto G06 en horizontal
 
+> **Estado: ✅ Aplicadas y verificadas** en el commit `62225e2` (20 nov. 2026), probadas a **820 × 360 px (2×)** con las capturas actualizadas en `docs/capturas/`.
+
 Revisión del panel corriendo en vivo (commit `55b5e70`, 20 nov. 2026), capturado con el tamaño real del celular:
 
 - **820 × 360 px**: Chrome a pantalla completa o instalado como app, en horizontal (densidad 2×).
@@ -104,9 +106,9 @@ hace el koala de VS Code desde la 1.12.0) o poner "libre" / "usado" junto a cada
 ## Cómo probarlo
 1. Chrome o Edge → DevTools → barra de dispositivos → dispositivo personalizado de **820 × 360**, densidad 2 (y otro de
    **770 × 360**).
-2. Revisar en cada tarjeta del carrusel:
-   - [ ] nada queda cortado ni necesita desplazarse (koala con sus botones, cuotas completas, volumen);
-   - [ ] los títulos de las tarjetas se leen completos;
-   - [ ] las barras de PC & GPU se ven;
-   - [ ] ninguna etiqueta ni recuadro se parte en varios renglones;
-   - [ ] los botones se pueden tocar con el dedo sin atinar al vecino.
+2. Revisar en cada tarjeta del carrusel (verificado en commit `62225e2`):
+   - [x] nada queda cortado ni necesita desplazarse (koala con sus botones, cuotas completas, volumen);
+   - [x] los títulos de las tarjetas se leen completos;
+   - [x] las barras de PC & GPU se ven;
+   - [x] ninguna etiqueta ni recuadro se parte en varios renglones;
+   - [x] los botones se pueden tocar con el dedo sin atinar al vecino.

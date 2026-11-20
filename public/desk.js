@@ -14,17 +14,16 @@
 
   // ---------- Carruseles deslizables ----------
   const TARJETAS = [
-    ['antigravity', '🚀 Antigravity'],
+    ['ia', '✨ Cuotas IA'],
     ['pc', '🖥️ PC & GPU'],
     ['musica', '🎵 Música & Control'],
-    ['claude', '🧪 Claude Code'],
     ['pomodoro', '⏱️ Pomodoro'],
     ['alarmas', '⏰ Alarmas'],
   ];
   const IDS = TARJETAS.map((x) => x[0]);
-  const INICIO = ['antigravity', 'pc'];
+  const INICIO = ['ia', 'pc'];
   const MAX_CARRUSELES = 4;
-  const STORAGE_KEY = 'koalaDesk.carruseles.v1';
+  const STORAGE_KEY = 'koalaDesk.carruseles.v2';
 
   let carruseles = INICIO.slice();
   try {
@@ -131,7 +130,6 @@
     mostrarEn(i, val, IDS.indexOf(val) >= IDS.indexOf(carruseles[i]) ? 1 : -1);
   });
 
-  // Deslizar con el dedo o mouse sobre una tarjeta
   let arrastre = null;
   document.addEventListener('pointerdown', (e) => {
     const cuerpo = e.target && e.target.closest ? e.target.closest('.car-cuerpo') : null;
@@ -178,7 +176,7 @@
     el.textContent = texto;
     el.classList.add('visible');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.classList.remove('visible'), 5000);
+    toastTimer = setTimeout(() => el.classList.remove('visible'), 4500);
   }
 
   // ---------- Utilidades ----------
@@ -204,8 +202,13 @@
   function colorNivel(v, ambar, rojo) {
     return v >= rojo ? 'rojo' : v >= ambar ? 'ambar' : 'verde';
   }
-  function colorRestante(v) {
-    return v <= 15 ? 'rojo' : v <= 35 ? 'ambar' : 'verde';
+  function colorAntigravity(m, rest) {
+    if (rest <= 15) return 'rojo';
+    if (rest <= 30) return 'ambar';
+    const nom = String(m.nombre || '').toLowerCase();
+    if (nom.includes('argon')) return 'argon';
+    if (nom.includes('claude') || nom.includes('gpt')) return 'terceros';
+    return 'gemini';
   }
   function metrica(nombre, valor, pct, clase) {
     const w = Math.max(0, Math.min(100, pct || 0));
@@ -214,21 +217,21 @@
       `<span class="val">${esc(valor)}</span></div>`;
   }
 
-  // ---------- Pintar Antigravity ----------
+  // ---------- Pintar Antigravity (diferenciado por color) ----------
   function pintarAntigravity(ag) {
     const badge = $('agy-badge');
     const body = $('agy-body');
     if (!ag || !badge || !body) return;
 
     if (ag.estado === 'ok' && ag.modelos && ag.modelos.length) {
-      badge.className = 'badge ok';
-      badge.textContent = ag.plan ? `${ag.plan} · ${hace(ag.actualizado)}` : hace(ag.actualizado);
+      badge.className = 'badge gemini';
+      badge.textContent = hace(ag.actualizado);
       body.innerHTML = ag.modelos.map((m) => {
         const rest = m.restantePct != null ? m.restantePct : (m.usadoPct != null ? 100 - m.usadoPct : 0);
-        const col = colorRestante(rest);
-        const sub = m.reinicio ? `Se reinicia ${faltaPara(m.reinicio)}` : (m.estado || '');
+        const col = colorAntigravity(m, rest);
+        const sub = m.reinicio ? `Reinicia ${faltaPara(m.reinicio)}` : '';
         return `<div class="agy-item">` +
-          `<div class="agy-top"><b>${esc(m.nombre)}</b><span>${rest}% restante</span></div>` +
+          `<div class="agy-top"><b>${esc(m.nombre)}</b><span>${rest}%</span></div>` +
           `<div class="medidor"><i class="${col}" style="width:${rest}%"></i></div>` +
           (sub ? `<div class="agy-sub">${esc(sub)}</div>` : '') +
           `</div>`;
@@ -238,22 +241,18 @@
 
     if (ag.estado === 'no_instalado') {
       badge.className = 'badge warn';
-      badge.textContent = 'Falta CLI agy';
-      body.innerHTML = `<div class="nota">Instala el CLI oficial en PowerShell:<br>` +
-        `<code>irm https://antigravity.google/cli/install.ps1 | iex</code><br>` +
-        `Inicia sesión con <code>agy</code> y toca <b>↻</b>.</div>`;
+      badge.textContent = 'Falta agy';
+      body.innerHTML = `<div class="nota">Instala en PowerShell:<br><code>irm https://antigravity.google/cli/install.ps1 | iex</code></div>`;
       return;
     }
-
     if (ag.estado === 'sin_sesion') {
       badge.className = 'badge warn';
       badge.textContent = 'Sin sesión';
       body.innerHTML = `<div class="nota">Ejecuta <code>agy</code> para iniciar sesión y toca <b>↻</b>.</div>`;
       return;
     }
-
     badge.className = 'badge';
-    badge.textContent = ag.estado === 'cargando' ? 'Consultando…' : 'Sin datos';
+    badge.textContent = ag.estado === 'cargando' ? '…' : 'Sin datos';
     body.innerHTML = `<div class="nota">${esc(ag.error || 'Sin datos todavía.')}</div>`;
   }
 
@@ -324,8 +323,8 @@
     const u = m.uso || {};
     const cb = $('claude-badge');
     if (cb) {
-      if (u.fuente === 'anthropic') { cb.className = 'badge ok'; cb.textContent = 'Anthropic · ' + hace(u.actualizado); }
-      else if (u.fuente === 'statusline') { cb.className = 'badge ok'; cb.textContent = 'CLI · ' + hace(u.actualizado); }
+      if (u.fuente === 'anthropic') { cb.className = 'badge claude'; cb.textContent = 'API · ' + hace(u.actualizado); }
+      else if (u.fuente === 'statusline') { cb.className = 'badge claude'; cb.textContent = 'CLI · ' + hace(u.actualizado); }
       else { cb.className = 'badge'; cb.textContent = 'Local'; }
     }
 
@@ -365,7 +364,7 @@
 
   // ---------- Botones fijos ----------
   $('btn-agy-refresh').addEventListener('click', () => {
-    $('agy-badge').textContent = 'Actualizando…';
+    $('agy-badge').textContent = '…';
     enviar({ tipo: 'consultarAntigravity' });
   });
 
@@ -386,30 +385,93 @@
     $('alarma-msg').value = '';
   });
 
-  // ---------- Wake Lock & Fullscreen ----------
+  // ---------- Pantalla fija (Wake Lock nativo + respaldo NoSleep por video invisible para HTTP) ----------
   let wakeLock = null;
+  let noSleepVideo = null;
+  let noSleepTimer = null;
+  let pantallaFijaActiva = false;
+
+  function detenerNoSleep() {
+    clearInterval(noSleepTimer);
+    noSleepTimer = null;
+    if (noSleepVideo) {
+      try {
+        noSleepVideo.pause();
+        const st = noSleepVideo.srcObject;
+        if (st && st.getTracks) st.getTracks().forEach((t) => t.stop());
+        noSleepVideo.remove();
+      } catch (e) { /* */ }
+      noSleepVideo = null;
+    }
+  }
+
+  async function iniciarNoSleepVideo() {
+    const c = document.createElement('canvas');
+    c.width = 2; c.height = 2;
+    const ctx = c.getContext('2d');
+    let tick = 0;
+    const pintar = () => {
+      ctx.fillStyle = (tick++ % 2) ? '#000' : '#010101';
+      ctx.fillRect(0, 0, 2, 2);
+    };
+    pintar();
+    const stream = c.captureStream ? c.captureStream(1) : null;
+    if (!stream) return false;
+    const v = document.createElement('video');
+    v.muted = true;
+    v.playsInline = true;
+    v.loop = true;
+    v.setAttribute('playsinline', '');
+    v.setAttribute('muted', '');
+    v.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0.001;pointer-events:none;bottom:0;right:0;';
+    v.srcObject = stream;
+    document.body.appendChild(v);
+    await v.play();
+    noSleepVideo = v;
+    noSleepTimer = setInterval(pintar, 5000);
+    return true;
+  }
+
   $('btn-wakelock').addEventListener('click', async () => {
-    if (!('wakeLock' in navigator)) {
-      mostrarToast('Activa "Pantalla activa" en Opciones de desarrollador del Motorola');
+    if (pantallaFijaActiva) {
+      if (wakeLock) { try { await wakeLock.release(); } catch (e) { /* */ } wakeLock = null; }
+      detenerNoSleep();
+      pantallaFijaActiva = false;
+      $('btn-wakelock').classList.remove('activo');
+      mostrarToast('Pantalla fija desactivada');
       return;
     }
-    try {
-      if (wakeLock) {
-        await wakeLock.release();
-        wakeLock = null;
-        $('btn-wakelock').classList.remove('activo');
-      } else {
+
+    // 1. Intentar API nativa (localhost / HTTPS)
+    if ('wakeLock' in navigator) {
+      try {
         wakeLock = await navigator.wakeLock.request('screen');
+        pantallaFijaActiva = true;
         $('btn-wakelock').classList.add('activo');
-        mostrarToast('Pantalla fija activada');
+        mostrarToast('☀️ Pantalla fija activada');
         wakeLock.addEventListener('release', () => {
           wakeLock = null;
-          $('btn-wakelock').classList.remove('activo');
+          if (!noSleepVideo) {
+            pantallaFijaActiva = false;
+            $('btn-wakelock').classList.remove('activo');
+          }
         });
-      }
-    } catch (e) {
-      mostrarToast('Wake Lock requiere HTTPS (usa "Pantalla activa al cargar" en Android)');
+        return;
+      } catch (e) { /* caer al modo HTTP */ }
     }
+
+    // 2. Respaldo para HTTP en red local (video silencioso invisible estilo NoSleep)
+    try {
+      const ok = await iniciarNoSleepVideo();
+      if (ok) {
+        pantallaFijaActiva = true;
+        $('btn-wakelock').classList.add('activo');
+        mostrarToast('☀️ Pantalla fija activada (modo HTTP)');
+        return;
+      }
+    } catch (e) { /* */ }
+
+    mostrarToast('Activa "Pantalla activa al cargar" en Opciones de desarrollador del Moto G06');
   });
 
   $('btn-fullscreen').addEventListener('click', () => {
@@ -419,7 +481,7 @@
       const fn = el.requestFullscreen || el.webkitRequestFullscreen;
       if (fn) {
         Promise.resolve(fn.call(el)).catch(() => {
-          mostrarToast('En Chrome móvil usa ⋮ → "Agregar a pantalla principal" para pantalla completa permanente');
+          mostrarToast('En Chrome móvil usa ⋮ → "Agregar a pantalla principal"');
         });
       }
     } else {

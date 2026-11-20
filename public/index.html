@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0d1117">
+  <meta name="theme-color" content="#111318">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="manifest" href="/manifest.json">
@@ -62,45 +62,54 @@
       <div class="car-pie">
         <span class="nota">Desliza horizontalmente o usa ‹ › para cambiar tarjeta</span>
         <div class="car-pie-btns">
-          <button class="btn-chico" id="car-agregar">+ Panel</button>
+          <button class="btn-chico btn-tonal" id="car-agregar">+ Panel</button>
           <button class="btn-chico" id="car-restablecer">Restablecer</button>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Depósito de tarjetas (koala.js y desk.js actualizan sus IDs aunque no estén visibles) -->
+  <!-- Depósito de tarjetas -->
   <div id="deposito" hidden>
-    <!-- 1. Antigravity -->
-    <div class="tj" data-tj="antigravity">
-      <div class="tj-top">
-        <span class="badge" id="agy-badge">...</span>
-        <button class="btn-chico" id="btn-agy-refresh" title="Actualizar cuotas">↻ Actualizar</button>
+    <!-- 1. Cuotas IA unificadas (Antigravity + Claude Code separados por color) -->
+    <div class="tj" data-tj="ia">
+      <!-- Bloque Antigravity / Gemini (Azul / Celeste) -->
+      <div class="ia-bloque gemini-sec">
+        <div class="ia-sec-head">
+          <span class="ia-sec-title gemini">✨ Antigravity · Gemini</span>
+          <div style="display:flex;gap:5px;align-items:center;">
+            <span class="badge gemini" id="agy-badge">...</span>
+            <button class="btn-chico" id="btn-agy-refresh" title="Actualizar cuotas">↻</button>
+          </div>
+        </div>
+        <div id="agy-body"><div class="nota">Consultando cuotas…</div></div>
       </div>
-      <div id="agy-body"><div class="nota">Consultando cuotas…</div></div>
+
+      <!-- Bloque Claude Code (Terracota / Cálido) -->
+      <div class="ia-bloque claude-sec">
+        <div class="ia-sec-head">
+          <span class="ia-sec-title claude">🧪 Claude Code</span>
+          <div style="display:flex;gap:5px;align-items:center;">
+            <span class="badge claude" id="claude-badge">—</span>
+            <button class="btn-chico" id="btn-claude-api" title="Activar o consultar API directa de Anthropic">API</button>
+          </div>
+        </div>
+        <div class="probeta">
+          <div class="tit"><span>Sesión (5 h)</span><b id="p-cinco">—</b></div>
+          <div class="tubo"><i id="t-cinco"></i><span class="marcas"></span></div>
+          <div class="sub" id="s-cinco"></div>
+        </div>
+        <div class="probeta">
+          <div class="tit"><span>Semana</span><b id="p-semana">—</b></div>
+          <div class="tubo"><i id="t-semana"></i><span class="marcas"></span></div>
+          <div class="sub" id="s-semana"></div>
+        </div>
+        <div id="uso-nota" class="nota"></div>
+        <div id="claude-ritmo" class="nota"></div>
+      </div>
     </div>
 
-    <!-- 2. Claude Code -->
-    <div class="tj" data-tj="claude">
-      <div class="tj-top">
-        <span class="badge" id="claude-badge">—</span>
-        <button class="btn-chico" id="btn-claude-api" title="Activar o consultar API directa de Anthropic">API Anthropic</button>
-      </div>
-      <div class="probeta">
-        <div class="tit"><span>Sesión (5 h)</span><b id="p-cinco">—</b></div>
-        <div class="tubo"><i id="t-cinco"></i><span class="marcas"></span></div>
-        <div class="sub" id="s-cinco"></div>
-      </div>
-      <div class="probeta">
-        <div class="tit"><span>Semana</span><b id="p-semana">—</b></div>
-        <div class="tubo"><i id="t-semana"></i><span class="marcas"></span></div>
-        <div class="sub" id="s-semana"></div>
-      </div>
-      <div id="uso-nota" class="nota"></div>
-      <div id="claude-ritmo" class="nota"></div>
-    </div>
-
-    <!-- 3. PC & GPU -->
+    <!-- 2. PC & GPU -->
     <div class="tj" data-tj="pc">
       <div class="tj-top">
         <span class="badge" id="pc-host">—</span>
@@ -109,7 +118,7 @@
       <div id="pc-body"><div class="nota">Midiendo hardware…</div></div>
     </div>
 
-    <!-- 4. Música & Control Deck -->
+    <!-- 3. Música & Control Deck -->
     <div class="tj" data-tj="musica">
       <div class="now-playing" id="now-playing">
         <div class="np-icon" id="np-icon">🎵</div>
@@ -120,7 +129,7 @@
       </div>
       <div class="media-grid">
         <button class="media-btn" data-media="prev">⏮<span>Anterior</span></button>
-        <button class="media-btn" data-media="playPause" id="btn-playpause">⏯<span>Play/Pausa</span></button>
+        <button class="media-btn primaria" data-media="playPause" id="btn-playpause">⏯<span>Play/Pausa</span></button>
         <button class="media-btn" data-media="next">⏭<span>Siguiente</span></button>
         <button class="media-btn" data-media="volDown">🔉<span>Vol −</span></button>
         <button class="media-btn" data-media="mute">🔇<span>Silenciar</span></button>
@@ -128,7 +137,7 @@
       </div>
     </div>
 
-    <!-- 5. Pomodoro -->
+    <!-- 4. Pomodoro -->
     <div class="tj" data-tj="pomodoro">
       <div class="tj-top">
         <span class="badge" id="pomo-hoy">0 hoy</span>
@@ -144,7 +153,7 @@
       </div>
     </div>
 
-    <!-- 6. Alarmas -->
+    <!-- 5. Alarmas -->
     <div class="tj" data-tj="alarmas">
       <div id="alarmas-lista"></div>
       <div class="alarma-form">

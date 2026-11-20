@@ -26,12 +26,18 @@
   const STORAGE_KEY = 'koalaDesk.carruseles.v2';
 
   let carruseles = INICIO.slice();
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if (Array.isArray(saved) && saved.length > 0 && saved.every((x) => IDS.includes(x))) {
-      carruseles = saved.slice(0, MAX_CARRUSELES);
-    }
-  } catch (e) { /* */ }
+  const paramPaneles = new URLSearchParams(window.location.search).get('paneles');
+  if (paramPaneles) {
+    const lista = paramPaneles.split(',').map((s) => s.trim()).filter((x) => IDS.includes(x));
+    if (lista.length) carruseles = lista.slice(0, MAX_CARRUSELES);
+  } else {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if (Array.isArray(saved) && saved.length > 0 && saved.every((x) => IDS.includes(x))) {
+        carruseles = saved.slice(0, MAX_CARRUSELES);
+      }
+    } catch (e) { /* */ }
+  }
 
   function guardarCarruseles() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(carruseles)); } catch (e) { /* */ }
@@ -500,8 +506,25 @@
     }
   });
 
-  // ---------- Conexión SSE ----------
+  // ---------- Conexión SSE (o fetch único con ?foto=1 para capturas rápidas) ----------
+  function aplicarEstado(msg) {
+    window.postMessage(msg, '*');
+    if (msg.tipo === 'estado') {
+      pintarAntigravity(msg.antigravity);
+      pintarSistema(msg.sistema);
+      pintarMedia(msg.media);
+      pintarExtras(msg);
+    }
+  }
   function conectar() {
+    if (new URLSearchParams(window.location.search).get('foto') === '1') {
+      fetch('/api/state').then((r) => r.json()).then((msg) => {
+        $('conn-dot').classList.remove('off');
+        $('conn-txt').textContent = 'En línea';
+        aplicarEstado(msg);
+      }).catch(() => {});
+      return;
+    }
     const es = new EventSource('/events');
     es.onopen = () => {
       $('conn-dot').classList.remove('off');
@@ -518,13 +541,7 @@
         mostrarToast(msg.texto);
         return;
       }
-      window.postMessage(msg, '*');
-      if (msg.tipo === 'estado') {
-        pintarAntigravity(msg.antigravity);
-        pintarSistema(msg.sistema);
-        pintarMedia(msg.media);
-        pintarExtras(msg);
-      }
+      aplicarEstado(msg);
     };
   }
   conectar();

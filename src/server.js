@@ -6,6 +6,7 @@ const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { execFile } = require('child_process');
 
 const { crearCompartido, crearLider } = require('./koala-core/compartido');
 const { crearConsumo, ventanaVigente, HORA } = require('./koala-core/consumo');
@@ -178,16 +179,43 @@ function oficial() {
   return base.actualizado ? { ...base, fuente: 'statusline' } : base;
 }
 
+function cuotaDisponibleIA() {
+  const valores = [];
+  const vClaude = ventanaVigente(oficial().five_hour);
+  if (vClaude) valores.push(vClaude.reiniciada ? 100 : limitar(100 - vClaude.pct));
+
+  const modelosAgy = (antigravityData && Array.isArray(antigravityData.modelos)) ? antigravityData.modelos : [];
+  const gem5h = modelosAgy.find((m) => m.ventana === '5h' && /gemini/i.test(m.grupo || m.nombre || ''));
+  if (gem5h && gem5h.restantePct != null) {
+    valores.push(limitar(gem5h.restantePct));
+  } else if (modelosAgy.length) {
+    const validos = modelosAgy.map((m) => m.restantePct).filter((v) => v != null);
+    if (validos.length) valores.push(limitar(validos.reduce((a, b) => a + b, 0) / validos.length));
+  }
+
+  if (!valores.length) return null;
+  return Math.round(valores.reduce((a, b) => a + b, 0) / valores.length);
+}
+
 function energiaDeSesion() {
-  const v = ventanaVigente(oficial().five_hour);
-  if (!v) return null;
-  return v.reiniciada ? 100 : limitar(100 - v.pct);
+  return cuotaDisponibleIA();
+}
+
+function sincronizarEnergiaYAnimo() {
+  const disp = cuotaDisponibleIA();
+  if (disp === null) return false;
+  necesidades.energia = disp;
+  // El ánimo acompaña la cuota disponible: contento cuando hay margen, baja cuando escasean los tokens.
+  if (disp >= 65 && necesidades.animo < disp) {
+    necesidades.animo = limitar(Math.round(necesidades.animo + (disp - necesidades.animo) * 0.35));
+  } else if (disp <= 35 && necesidades.animo > disp) {
+    const piso = Math.max(15, disp);
+    necesidades.animo = limitar(Math.round(necesidades.animo - (necesidades.animo - piso) * 0.35));
+  }
+  return true;
 }
 function sincronizarEnergia() {
-  const e = energiaDeSesion();
-  if (e === null) return false;
-  necesidades.energia = e;
-  return true;
+  return sincronizarEnergiaYAnimo();
 }
 
 function cargarEstado() {
@@ -388,10 +416,68 @@ async function consultarAntigravity(forzar) {
   proximaConsultaAgy = Date.now() + Math.max(2, config().get('minutosEntreConsultasAgy', 5)) * 60000;
   try {
     antigravityData = await antigravityMod.consultarAntigravity();
+    sincronizarEnergiaYAnimo();
+    guardarEstado();
   } finally {
     consultandoAgy = false;
   }
   enviarEstado();
+}
+
+// ---------- Saciedad autosuficiente: el Koala come con cada commit ----------
+const ultimoCommitRepo = new Map();
+let commitsInicializados = false;
+
+function descubrirReposGit() {
+  const raiz = path.dirname(path.join(__dirname, '..'));
+  const repos = [];
+  try {
+    for (const ent of fs.readdirSync(raiz, { withFileTypes: true })) {
+      if (!ent.isDirectory() || ent.name.startsWith('.')) continue;
+      const dir = path.join(raiz, ent.name);
+      if (fs.existsSync(path.join(dir, '.git'))) repos.push({ nombre: ent.name, dir });
+      if (repos.length >= 16) break;
+    }
+  } catch (e) { /* */ }
+  return repos;
+}
+
+function leerHeadGit(dir) {
+  return new Promise((resolver) => {
+    execFile(
+      'git',
+      ['-C', dir, 'log', '-1', '--format=%H%x09%ct%x09%s'],
+      { timeout: 3000, windowsHide: true },
+      (err, stdout) => {
+        if (err || !stdout) return resolver(null);
+        const [hash, tsSec, ...msg] = stdout.trim().split('\t');
+        if (!hash) return resolver(null);
+        resolver({ hash, ts: Number(tsSec || 0) * 1000, mensaje: msg.join(' ').trim() });
+      }
+    );
+  });
+}
+
+async function vigilarCommits() {
+  const repos = descubrirReposGit();
+  for (const r of repos) {
+    const head = await leerHeadGit(r.dir);
+    if (!head) continue;
+    const previo = ultimoCommitRepo.get(r.dir);
+    ultimoCommitRepo.set(r.dir, head.hash);
+    // Commit nuevo y reciente (menos de 5 min): el koala come y festeja automáticamente
+    if (commitsInicializados && previo && previo !== head.hash && (Date.now() - head.ts < 5 * 60000)) {
+      necesidades.saciedad = limitar(necesidades.saciedad + 30);
+      necesidades.animo = limitar(necesidades.animo + 10);
+      if (durmiendo) durmiendo = false;
+      rutina.alCommit();
+      guardarEstado();
+      animar('festejarCommit', { repo: r.nombre, mensaje: head.mensaje.slice(0, 60) });
+      notificar(`🌿 Commit en ${r.nombre}: el koala comió y festejó`);
+      enviarEstado();
+    }
+  }
+  commitsInicializados = true;
 }
 
 // ---------- Sistema, Clima y Servicios ----------
@@ -689,6 +775,7 @@ medirClima().then(enviarEstado);
 medirServicios();
 consultarAnthropic(false);
 consultarAntigravity(true);
+vigilarCommits();
 
 fs.watchFile(RUTA_USO, { interval: 2000 }, leerUsoOficial);
 fs.watchFile(RUTA_ESTADO_CLAUDE, { interval: 1000 }, leerEstadoClaude);
@@ -699,6 +786,7 @@ setInterval(() => pomodoro.revisar(Date.now(), lider.esLider()), 1000);
 setInterval(() => alarmas.revisar(new Date(), lider.esLider()), 15000);
 setInterval(medirSistema, 3000);
 setInterval(medirMedia, 4000);
+setInterval(vigilarCommits, 15000);
 setInterval(() => { consumo.escanearTranscripciones(); }, 30000);
 setInterval(medirServicios, 60000);
 setInterval(() => medirClima().then(enviarEstado), 15 * 60000);

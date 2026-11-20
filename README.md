@@ -1,13 +1,22 @@
 # Koala Desk Monitor 🐨📱
 
-Panel de escritorio independiente para celular Android (pensado para el **Moto G06** en horizontal), basado en tu **Koala científico**, con:
+Panel de escritorio independiente para celular Android (diseñado para **Moto G06** en horizontal con estética **Material 3 Expressive**: líneas senoidales animadas, formas orgánicas, grupos de botones conectados y física de resorte), basado en tu **Koala científico**.
 
-- **Koala en vivo** sincronizado con VS Code / Antigravity vía `~/.claude/koala/compartido.json` (sigue corriendo aunque cierres el editor para jugar).
-- **Cuotas de Antigravity** (modelos restantes y reinicio) mediante el CLI oficial `agy`.
-- **Límites de Claude Code** (sesión 5 h, semana, ritmo y consulta opcional a Anthropic API).
-- **Monitor de PC & GPU** (CPU, RAM, disco y **NVIDIA GPU**: uso %, temperatura °C y VRAM).
-- **Control Deck táctil** (Play/Pausa, Anterior/Siguiente, Volumen +/- y Silenciar en Windows sin hacer Alt+Tab).
-- **Reloj, Clima, Pomodoro y Alarmas**.
+| Vista principal (Cuotas IA + PC & GPU) | Música & Control + Pomodoro |
+|---|---|
+| ![Vista principal](docs/capturas/panel-ia-pc.png) | ![Música y Pomodoro](docs/capturas/panel-musica-pomodoro.png) |
+
+## Qué incluye
+
+- **Koala vivo y autosuficiente:**
+  - **Energía y Ánimo ligados a tus cuotas de IA:** mientras más cuota disponible tengas en **Antigravity (Gemini)** y **Claude Code**, el Koala está más contento y activo; si escasean los tokens, su ánimo y energía bajan para avisarte.
+  - **Saciedad automática con commits:** cada vez que haces un `git commit` en tus proyectos locales, el Koala come y festeja automáticamente para mantenerse vivo mientras programas.
+  - **Reacciona en vivo a Antigravity y Claude Code:** rastrea ambos agentes por separado sin pisarse y te dice exactamente quién está trabajando o quién terminó.
+  - Sincronizado con VS Code / Antigravity vía `~/.claude/koala/compartido.json` (sigue funcionando aunque cierres el editor para jugar).
+- **Tarjeta unificada `✨ Cuotas IA`:** cuotas restantes y reinicio de **Antigravity** (Gemini 5 h / Semana, Argon, Claude & GPT) en azul/celeste y **Claude Code** (5 h, Semana, ritmo y API directa) en terracota.
+- **Monitor de PC & GPU:** CPU, RAM, disco y **NVIDIA GPU** (`nvidia-smi`: uso %, temperatura °C y VRAM).
+- **Música & Control Deck:** lee la canción actual en Windows (**GSMTC**: Spotify, YouTube, Chrome, VLC) con forma *Cookie* giratoria, onda senoidal viva, controles multimedia directos y volumen maestro vía **Core Audio (`IAudioEndpointVolume`)**.
+- **Carruseles deslizables** (hasta 4 paneles configurables), **Reloj**, **Clima**, **Pomodoro**, **Alarmas** y **☀️ Pantalla fija** (compatible incluso en HTTP local).
 
 ## Uso rápido
 
@@ -17,7 +26,7 @@ Panel de escritorio independiente para celular Android (pensado para el **Moto G
    ```
 2. En tu **Moto G06** (en la misma red Wi-Fi), abre Chrome y entra a la dirección `Celular` que imprime la consola (por ejemplo `http://192.168.1.11:4747`).
 3. Pon el celular en **horizontal**, toca el menú `⋮` de Chrome → **Agregar a pantalla principal** para abrirlo a pantalla completa como app.
-4. *(Tip Moto G06)* Activa **Configuración → Batería → Protección contra sobrecarga** (limita la carga al 80 %) y en **Opciones de desarrollador → Pantalla activa** si lo dejarás conectado al cargador.
+4. *(Tip Moto G06)* Activa **Configuración → Batería → Protección contra sobrecarga** (limita la carga al 80 %).
 
 ## Inicio automático en Windows (sin ventana negra)
 
@@ -33,7 +42,7 @@ Para que el Koala saque su laptop, teclee mientras Antigravity trabaja y te avis
 ```powershell
 node scripts/instalar-hooks-antigravity.js
 ```
-*(O dale doble clic a `instalar-hooks-antigravity.bat`).* Esto registra el hook `koala-monitor` en `~/.gemini/config/hooks.json` usando el mismo `~/.claude/koala-estado.json` que Claude Code.
+*(O dale doble clic a `instalar-hooks-antigravity.bat`).* Registra el hook `koala-monitor` en `~/.gemini/config/hooks.json`.
 
 ## Activar cuotas de Antigravity (modelos restantes)
 
@@ -43,14 +52,23 @@ El panel consulta el CLI oficial de Antigravity (`agy -p /usage --output-format 
 irm https://antigravity.google/cli/install.ps1 | iex
 ```
 
-Después abre una terminal nueva, ejecuta `agy` una sola vez para iniciar sesión con tu cuenta de Google, y toca el botón **↻** en la tarjeta de **Antigravity · Modelos**.
+Después abre una terminal nueva, ejecuta `agy` una sola vez para iniciar sesión con tu cuenta de Google, y toca **↻** en la tarjeta de **Cuotas IA**.
 
-> Si el formato de salida de `agy` cambia, puedes inspeccionar la respuesta cruda en `http://localhost:4747/api/antigravity/raw`.
+> Puedes inspeccionar la respuesta cruda en `http://localhost:4747/api/antigravity/raw`.
 
 ## Si el celular no carga la página por Wi-Fi
 
-Windows Firewall a veces bloquea el puerto `4747` en redes locales. Permite el puerto en PowerShell (como administrador):
+Permite el puerto `4747` en PowerShell (como administrador):
 
 ```powershell
 New-NetFirewallRule -DisplayName "Koala Desk Monitor" -Direction Inbound -Protocol TCP -LocalPort 4747 -Action Allow
 ```
+
+---
+
+## 🎙️ Escucha nuestros podcasts
+
+Si te gustó este proyecto, pásate a escuchar nuestros podcasts sobre ciencia, inteligencia artificial y ciencia ficción:
+
+- **[CiencIA](https://creators.spotify.com/pod/profile/jjas/)** — en Spotify for Creators
+- **[CiencIAficción](https://creators.spotify.com/pod/profile/jjas1/)** — en Spotify for Creators

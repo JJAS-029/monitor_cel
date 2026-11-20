@@ -152,6 +152,7 @@ let antigravityData = { estado: 'cargando', modelos: [], error: null, actualizad
 let proximaConsultaAgy = 0;
 
 let sistema = null;
+let mediaActual = null;
 let servicios = [];
 let serviciosCaidos = new Set();
 let climaActual = null;
@@ -360,6 +361,15 @@ async function medirSistema() {
   enviarEstado();
 }
 
+async function medirMedia() {
+  const m = await controlesMod.leerMediaActual();
+  if (m === undefined) return;
+  if (JSON.stringify(m) !== JSON.stringify(mediaActual)) {
+    mediaActual = m;
+    enviarEstado();
+  }
+}
+
 async function medirServicios() {
   servicios = await sistemaMod.revisarServicios(config().get('servicios', []));
   const caidos = new Set(servicios.filter((s) => !s.ok).map((s) => s.url));
@@ -448,6 +458,7 @@ function construirEstado() {
     pomodoro: pomodoro.estado(),
     hoy: consumo.resumenHoy(),
     sistema,
+    media: mediaActual,
     servicios,
     alertas: calcularAlertas(uso),
     costos: consumo.resumenCostos({
@@ -522,7 +533,9 @@ async function manejarMensaje(msg) {
   } else if (msg.tipo === 'consultarAntigravity') {
     consultarAntigravity(true);
   } else if (msg.tipo === 'media') {
-    return controlesMod.enviarTecla(msg.accion);
+    const r = await controlesMod.enviarTecla(msg.accion);
+    setTimeout(medirMedia, 500);
+    return r;
   } else if (msg.tipo === 'setCiudad') {
     cfgLocal['clima.ciudad'] = String(msg.ciudad || '').trim();
     guardarConfigLocal();
@@ -630,6 +643,7 @@ leerUsoOficial();
 leerEstadoClaude();
 consumo.escanearTranscripciones();
 medirSistema();
+medirMedia();
 medirClima().then(enviarEstado);
 medirServicios();
 consultarAnthropic(false);
@@ -642,6 +656,7 @@ setInterval(tick, 60000);
 setInterval(() => pomodoro.revisar(Date.now(), lider.esLider()), 1000);
 setInterval(() => alarmas.revisar(new Date(), lider.esLider()), 15000);
 setInterval(medirSistema, 3000);
+setInterval(medirMedia, 4000);
 setInterval(() => { consumo.escanearTranscripciones(); }, 30000);
 setInterval(medirServicios, 60000);
 setInterval(() => medirClima().then(enviarEstado), 15 * 60000);

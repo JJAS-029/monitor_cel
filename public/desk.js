@@ -12,6 +12,156 @@
     }).catch(() => {});
   }
 
+  // ---------- Carruseles deslizables ----------
+  const TARJETAS = [
+    ['antigravity', '🚀 Antigravity'],
+    ['pc', '🖥️ PC & GPU'],
+    ['musica', '🎵 Música & Control'],
+    ['claude', '🧪 Claude Code'],
+    ['pomodoro', '⏱️ Pomodoro'],
+    ['alarmas', '⏰ Alarmas'],
+  ];
+  const IDS = TARJETAS.map((x) => x[0]);
+  const INICIO = ['antigravity', 'pc'];
+  const MAX_CARRUSELES = 4;
+  const STORAGE_KEY = 'koalaDesk.carruseles.v1';
+
+  let carruseles = INICIO.slice();
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (Array.isArray(saved) && saved.length > 0 && saved.every((x) => IDS.includes(x))) {
+      carruseles = saved.slice(0, MAX_CARRUSELES);
+    }
+  } catch (e) { /* */ }
+
+  function guardarCarruseles() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(carruseles)); } catch (e) { /* */ }
+  }
+  function nodoTarjeta(id) {
+    return document.querySelector('.tj[data-tj="' + id + '"]');
+  }
+
+  function armarCarruseles(animar) {
+    const caja = $('carruseles');
+    const dep = $('deposito');
+    if (!caja || !dep) return;
+
+    document.querySelectorAll('#carruseles .tj').forEach((n) => dep.appendChild(n));
+    caja.innerHTML = '';
+    caja.classList.toggle('uno', carruseles.length === 1);
+
+    carruseles.forEach((id, i) => {
+      const c = document.createElement('div');
+      c.className = 'carrusel';
+      c.setAttribute('data-i', i);
+      const opciones = TARJETAS.map((x) =>
+        `<option value="${x[0]}"${x[0] === id ? ' selected' : ''}>${esc(x[1])}</option>`
+      ).join('');
+      c.innerHTML =
+        `<div class="car-cab">` +
+        `<button data-car="prev" title="Anterior">‹</button>` +
+        `<select class="car-sel" data-car="sel">${opciones}</select>` +
+        `<span class="car-pos">${IDS.indexOf(id) + 1}/${IDS.length}</span>` +
+        `<button data-car="next" title="Siguiente">›</button>` +
+        (carruseles.length > 1 ? `<button data-car="quitar" title="Quitar panel">×</button>` : `<span></span>`) +
+        `</div><div class="car-cuerpo"></div><div class="car-puntos">` +
+        IDS.map((x) => `<i data-dot="${x}" class="${x === id ? 'sel' : ''}"></i>`).join('') +
+        `</div>`;
+
+      const cuerpo = c.querySelector('.car-cuerpo');
+      const n = nodoTarjeta(id);
+      if (n) cuerpo.appendChild(n);
+      if (animar && animar.i === i) cuerpo.classList.add(animar.dir > 0 ? 'entra-der' : 'entra-izq');
+      caja.appendChild(c);
+    });
+
+    const btnAg = $('car-agregar');
+    if (btnAg) btnAg.disabled = carruseles.length >= MAX_CARRUSELES;
+  }
+
+  function mostrarEn(i, id, dir) {
+    const otro = carruseles.indexOf(id);
+    if (otro === i) return;
+    if (otro >= 0) carruseles[otro] = carruseles[i];
+    carruseles[i] = id;
+    guardarCarruseles();
+    armarCarruseles({ i, dir: dir || 1 });
+  }
+
+  function moverCarrusel(i, dir) {
+    let k = IDS.indexOf(carruseles[i]);
+    for (let n = 0; n < IDS.length; n++) {
+      k = (k + dir + IDS.length) % IDS.length;
+      if (!carruseles.includes(IDS[k])) return mostrarEn(i, IDS[k], dir);
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const dot = e.target.closest && e.target.closest('.car-puntos i[data-dot]');
+    if (dot) {
+      const i = Number(dot.closest('.carrusel').getAttribute('data-i'));
+      const id = dot.getAttribute('data-dot');
+      mostrarEn(i, id, IDS.indexOf(id) >= IDS.indexOf(carruseles[i]) ? 1 : -1);
+      return;
+    }
+    const carBtn = e.target.closest && e.target.closest('[data-car]');
+    if (carBtn && carBtn.tagName !== 'SELECT') {
+      const i = Number(carBtn.closest('.carrusel').getAttribute('data-i'));
+      const que = carBtn.getAttribute('data-car');
+      if (que === 'prev') moverCarrusel(i, -1);
+      else if (que === 'next') moverCarrusel(i, 1);
+      else if (que === 'quitar' && carruseles.length > 1) {
+        carruseles.splice(i, 1);
+        guardarCarruseles();
+        armarCarruseles();
+      }
+      return;
+    }
+    const btn = e.target.closest && e.target.closest('button');
+    if (!btn) return;
+    if (btn.dataset.media) enviar({ tipo: 'media', accion: btn.dataset.media });
+    else if (btn.dataset.alarmaAlternar) enviar({ tipo: 'alternarAlarma', id: btn.dataset.alarmaAlternar });
+    else if (btn.dataset.alarmaBorrar) enviar({ tipo: 'borrarAlarma', id: btn.dataset.alarmaBorrar });
+  });
+
+  document.addEventListener('change', (e) => {
+    if (!e.target || e.target.getAttribute('data-car') !== 'sel') return;
+    const i = Number(e.target.closest('.carrusel').getAttribute('data-i'));
+    const val = e.target.value;
+    mostrarEn(i, val, IDS.indexOf(val) >= IDS.indexOf(carruseles[i]) ? 1 : -1);
+  });
+
+  // Deslizar con el dedo o mouse sobre una tarjeta
+  let arrastre = null;
+  document.addEventListener('pointerdown', (e) => {
+    const cuerpo = e.target && e.target.closest ? e.target.closest('.car-cuerpo') : null;
+    if (!cuerpo || e.target.closest('button, input, select, textarea, a')) return;
+    arrastre = { x: e.clientX, y: e.clientY, i: Number(cuerpo.closest('.carrusel').getAttribute('data-i')) };
+  });
+  document.addEventListener('pointerup', (e) => {
+    if (!arrastre) return;
+    const dx = e.clientX - arrastre.x, dy = e.clientY - arrastre.y;
+    const i = arrastre.i;
+    arrastre = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > 1.4 * Math.abs(dy)) moverCarrusel(i, dx < 0 ? 1 : -1);
+  });
+
+  $('car-agregar').addEventListener('click', () => {
+    if (carruseles.length >= MAX_CARRUSELES) return;
+    const libre = IDS.find((x) => !carruseles.includes(x));
+    if (!libre) return;
+    carruseles.push(libre);
+    guardarCarruseles();
+    armarCarruseles();
+  });
+  $('car-restablecer').addEventListener('click', () => {
+    carruseles = INICIO.slice();
+    guardarCarruseles();
+    armarCarruseles();
+  });
+
+  armarCarruseles();
+
   // ---------- Reloj ----------
   function actualizarReloj() {
     const d = new Date();
@@ -31,7 +181,7 @@
     toastTimer = setTimeout(() => el.classList.remove('visible'), 5000);
   }
 
-  // ---------- Utilidades de formato ----------
+  // ---------- Utilidades ----------
   function bytes(n) {
     const g = n / 1024 ** 3;
     return g >= 100 ? Math.round(g) + ' GB' : g.toFixed(1) + ' GB';
@@ -68,7 +218,7 @@
   function pintarAntigravity(ag) {
     const badge = $('agy-badge');
     const body = $('agy-body');
-    if (!ag) return;
+    if (!ag || !badge || !body) return;
 
     if (ag.estado === 'ok' && ag.modelos && ag.modelos.length) {
       badge.className = 'badge ok';
@@ -89,16 +239,16 @@
     if (ag.estado === 'no_instalado') {
       badge.className = 'badge warn';
       badge.textContent = 'Falta CLI agy';
-      body.innerHTML = `<div class="nota">Para ver cuánto te queda de cada modelo de Antigravity, instala el CLI oficial en PowerShell:<br>` +
+      body.innerHTML = `<div class="nota">Instala el CLI oficial en PowerShell:<br>` +
         `<code>irm https://antigravity.google/cli/install.ps1 | iex</code><br>` +
-        `Luego ejecuta <code>agy</code> una vez para iniciar sesión y toca <b>↻</b>.</div>`;
+        `Inicia sesión con <code>agy</code> y toca <b>↻</b>.</div>`;
       return;
     }
 
     if (ag.estado === 'sin_sesion') {
       badge.className = 'badge warn';
       badge.textContent = 'Sin sesión';
-      body.innerHTML = `<div class="nota">Abre una terminal, ejecuta <code>agy</code> para iniciar sesión con tu cuenta de Google y luego toca <b>↻</b>.</div>`;
+      body.innerHTML = `<div class="nota">Ejecuta <code>agy</code> para iniciar sesión y toca <b>↻</b>.</div>`;
       return;
     }
 
@@ -111,6 +261,11 @@
   function pintarSistema(s) {
     if (!s) return;
     $('pc-host').textContent = s.host || 'PC';
+    if (s.encendido) {
+      const h = Math.floor(s.encendido / 3600);
+      const m = Math.floor((s.encendido % 3600) / 60);
+      $('pc-uptime').textContent = h >= 24 ? `${Math.floor(h / 24)}d ${h % 24}h` : `${h}h ${m}m`;
+    }
     const cpu = s.cpu != null ? Math.round(s.cpu) : 0;
     const ramPct = s.memoria ? Math.round(s.memoria.pct) : 0;
     let html = '';
@@ -121,14 +276,14 @@
         `<div class="chip"><b>${cpu}%</b><span>CPU (${s.nucleos}c)</span></div>` +
         `<div class="chip"><b>${ramPct}%</b><span>RAM</span></div>` +
         `<div class="chip"><b>${g.uso != null ? g.uso + '%' : '—'}</b><span>GPU</span></div>` +
-        `<div class="chip"><b>${g.temperatura != null ? g.temperatura + '°C' : '—'}</b><span>Temp GPU</span></div>` +
+        `<div class="chip"><b>${g.temperatura != null ? g.temperatura + '°C' : '—'}</b><span>Temp</span></div>` +
         `</div>`;
       html += metrica(`GPU · ${g.nombre.replace(/^NVIDIA\s+/i, '')}`, `${g.uso ?? '—'}%`, g.uso, colorNivel(g.uso || 0, 75, 92));
       if (g.vramTotal) {
         html += metrica('VRAM', `${(g.vramUsada / 1024).toFixed(1)}/${(g.vramTotal / 1024).toFixed(0)} GB`, g.vramPct, colorNivel(g.vramPct || 0, 75, 90));
       }
     } else {
-      html += metrica(`CPU (${s.nucleos} núcleos)`, `${cpu}%`, cpu, colorNivel(cpu, 70, 90));
+      html += metrica(`CPU (${s.nucleos}c)`, `${cpu}%`, cpu, colorNivel(cpu, 70, 90));
     }
 
     if (s.memoria) {
@@ -140,14 +295,39 @@
     $('pc-body').innerHTML = html;
   }
 
-  // ---------- Pintar extras de Claude, Clima, Alertas y Alarmas ----------
+  // ---------- Pintar Música (Now Playing) ----------
+  function pintarMedia(media) {
+    const icon = $('np-icon');
+    const title = $('np-title');
+    const artist = $('np-artist');
+    const btnPlay = $('btn-playpause');
+    if (!title || !artist) return;
+
+    if (media && (media.titulo || media.artista)) {
+      const playing = media.estado === 'Playing';
+      icon.classList.toggle('playing', playing);
+      icon.textContent = playing ? '🎶' : '⏸️';
+      title.textContent = media.titulo || 'Reproduciendo…';
+      artist.textContent = [media.artista, media.album, media.app].filter(Boolean).join(' · ');
+      if (btnPlay) btnPlay.innerHTML = playing ? '⏸<span>Pausar</span>' : '▶️<span>Reproducir</span>';
+    } else {
+      icon.classList.remove('playing');
+      icon.textContent = '🎵';
+      title.textContent = 'Sin música activa';
+      artist.textContent = 'Reproduce Spotify, YouTube o VLC en tu PC';
+      if (btnPlay) btnPlay.innerHTML = '⏯<span>Play/Pausa</span>';
+    }
+  }
+
+  // ---------- Pintar extras ----------
   function pintarExtras(m) {
-    // Badge de fuente de Claude
     const u = m.uso || {};
     const cb = $('claude-badge');
-    if (u.fuente === 'anthropic') { cb.className = 'badge ok'; cb.textContent = 'Anthropic · ' + hace(u.actualizado); }
-    else if (u.fuente === 'statusline') { cb.className = 'badge ok'; cb.textContent = 'CLI · ' + hace(u.actualizado); }
-    else { cb.className = 'badge'; cb.textContent = 'Local'; }
+    if (cb) {
+      if (u.fuente === 'anthropic') { cb.className = 'badge ok'; cb.textContent = 'Anthropic · ' + hace(u.actualizado); }
+      else if (u.fuente === 'statusline') { cb.className = 'badge ok'; cb.textContent = 'CLI · ' + hace(u.actualizado); }
+      else { cb.className = 'badge'; cb.textContent = 'Local'; }
+    }
 
     const r = u.ritmo || {};
     if (r.estado === 'alcanza') {
@@ -159,23 +339,19 @@
       $('claude-ritmo').textContent = '';
     }
 
-    // Clima mini
     const cl = m.clima;
     const ICONOS = { despejado: '☀️', nublado: '⛅', niebla: '🌫️', lluvia: '🌧️', tormenta: '⛈️', nieve: '❄️' };
     if (cl && !cl.error) {
-      $('clima-mini').textContent = `${ICONOS[cl.tipo] || '🌡️'} ${cl.temp}°C · ${cl.nombre || ''}`;
+      $('clima-mini').textContent = `${ICONOS[cl.tipo] || '🌡️'} ${cl.temp}°`;
     } else {
-      $('clima-mini').textContent = '🌍 Elegir ciudad';
+      $('clima-mini').textContent = '🌍';
     }
 
-    // Pomodoro hoy
     if (m.pomodoro) $('pomo-hoy').textContent = `${m.pomodoro.hoy || 0} hoy`;
 
-    // Alertas
-    const al = (m.alertas || []).slice(0, 3);
+    const al = (m.alertas || []).slice(0, 2);
     $('alertas').innerHTML = al.map((x) => `<div class="alerta n${x.nivel}">${esc(x.texto)}</div>`).join('');
 
-    // Alarmas
     const lista = m.alarmas || [];
     $('alarmas-lista').innerHTML = lista.length
       ? lista.map((a) =>
@@ -187,19 +363,7 @@
       : '<div class="nota">Sin alarmas activas.</div>';
   }
 
-  // ---------- Eventos UI ----------
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('button');
-    if (!btn) return;
-    if (btn.dataset.media) {
-      enviar({ tipo: 'media', accion: btn.dataset.media });
-    } else if (btn.dataset.alarmaAlternar) {
-      enviar({ tipo: 'alternarAlarma', id: btn.dataset.alarmaAlternar });
-    } else if (btn.dataset.alarmaBorrar) {
-      enviar({ tipo: 'borrarAlarma', id: btn.dataset.alarmaBorrar });
-    }
-  });
-
+  // ---------- Botones fijos ----------
   $('btn-agy-refresh').addEventListener('click', () => {
     $('agy-badge').textContent = 'Actualizando…';
     enviar({ tipo: 'consultarAntigravity' });
@@ -222,11 +386,11 @@
     $('alarma-msg').value = '';
   });
 
-  // ---------- Screen Wake Lock & Fullscreen ----------
+  // ---------- Wake Lock & Fullscreen ----------
   let wakeLock = null;
-  async function activarWakeLock() {
+  $('btn-wakelock').addEventListener('click', async () => {
     if (!('wakeLock' in navigator)) {
-      mostrarToast('Tu navegador no soporta Wake Lock en HTTP (usa pantalla siempre activa en Android)');
+      mostrarToast('Activa "Pantalla activa" en Opciones de desarrollador del Motorola');
       return;
     }
     try {
@@ -234,22 +398,19 @@
         await wakeLock.release();
         wakeLock = null;
         $('btn-wakelock').classList.remove('activo');
-        $('btn-wakelock').textContent = '☀️ Pantalla fija';
       } else {
         wakeLock = await navigator.wakeLock.request('screen');
         $('btn-wakelock').classList.add('activo');
-        $('btn-wakelock').textContent = '☀️ Pantalla fija (ON)';
+        mostrarToast('Pantalla fija activada');
         wakeLock.addEventListener('release', () => {
           wakeLock = null;
           $('btn-wakelock').classList.remove('activo');
-          $('btn-wakelock').textContent = '☀️ Pantalla fija';
         });
       }
     } catch (e) {
-      mostrarToast('Wake Lock requiere HTTPS o localhost (o activa "Pantalla activa al cargar" en Opciones de desarrollador)');
+      mostrarToast('Wake Lock requiere HTTPS (usa "Pantalla activa al cargar" en Android)');
     }
-  }
-  $('btn-wakelock').addEventListener('click', activarWakeLock);
+  });
 
   $('btn-fullscreen').addEventListener('click', () => {
     const el = document.documentElement;
@@ -260,8 +421,6 @@
         Promise.resolve(fn.call(el)).catch(() => {
           mostrarToast('En Chrome móvil usa ⋮ → "Agregar a pantalla principal" para pantalla completa permanente');
         });
-      } else {
-        mostrarToast('Usa ⋮ → "Agregar a pantalla principal" en Chrome para abrir a pantalla completa');
       }
     } else {
       const exitFn = document.exitFullscreen || document.webkitExitFullscreen;
@@ -269,7 +428,7 @@
     }
   });
 
-  // ---------- Conexión SSE en tiempo real ----------
+  // ---------- Conexión SSE ----------
   function conectar() {
     const es = new EventSource('/events');
     es.onopen = () => {
@@ -287,11 +446,11 @@
         mostrarToast(msg.texto);
         return;
       }
-      // Reenviar a koala.js (escucha window.addEventListener('message', ...))
       window.postMessage(msg, '*');
       if (msg.tipo === 'estado') {
         pintarAntigravity(msg.antigravity);
         pintarSistema(msg.sistema);
+        pintarMedia(msg.media);
         pintarExtras(msg);
       }
     };

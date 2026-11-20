@@ -23,7 +23,11 @@
           <div class="reloj-fecha" id="reloj-fecha">---</div>
         </div>
         <div class="reloj-der">
-          <div class="clima-mini" id="clima-mini" title="Toca para elegir ciudad">🌡️ --</div>
+          <div class="reloj-tools">
+            <span class="clima-mini" id="clima-mini" title="Toca para elegir ciudad">🌍</span>
+            <button class="icon-btn" id="btn-wakelock" title="Mantener pantalla encendida">☀️</button>
+            <button class="icon-btn" id="btn-fullscreen" title="Pantalla completa">⛶</button>
+          </div>
           <div class="conn-dot" id="conn-dot"><i></i><span id="conn-txt">Conectando</span></div>
         </div>
       </div>
@@ -34,130 +38,129 @@
         <canvas id="lienzo" title="Toca para mimar al koala"></canvas>
         <div id="estado">Preparando el laboratorio…</div>
 
-        <div class="fila"><span>Saciedad</span><div class="barra"><i id="b-saciedad"></i></div><span class="num" id="n-saciedad"></span></div>
-        <div class="fila"><span>Ánimo</span><div class="barra"><i id="b-animo"></i></div><span class="num" id="n-animo"></span></div>
-        <div class="fila"><span id="l-energia">Energía</span><div class="barra"><i id="b-energia"></i></div><span class="num" id="n-energia"></span></div>
-        <div class="sub" id="s-energia"></div>
-        <div class="fila"><span>Agua</span><div class="barra"><i id="b-agua"></i></div><span class="num" id="n-agua"></span></div>
+        <div>
+          <div class="fila"><span>Saciedad</span><div class="barra"><i id="b-saciedad"></i></div><span class="num" id="n-saciedad"></span></div>
+          <div class="fila"><span>Ánimo</span><div class="barra"><i id="b-animo"></i></div><span class="num" id="n-animo"></span></div>
+          <div class="fila"><span id="l-energia">Energía</span><div class="barra"><i id="b-energia"></i></div><span class="num" id="n-energia"></span></div>
+          <div class="sub" id="s-energia"></div>
+          <div class="fila"><span>Agua</span><div class="barra"><i id="b-agua"></i></div><span class="num" id="n-agua"></span></div>
+        </div>
 
         <div class="botones">
-          <button data-accion="comer">🌿 Comer</button>
-          <button data-accion="jugar">⚽ Jugar</button>
-          <button data-accion="mimar">❤️ Mimar</button>
-          <button data-accion="dormir" id="btn-dormir">💤 Dormir</button>
-        </div>
-        <button class="boton-agua" id="btn-agua">💧 Tomé un vaso de agua</button>
-      </div>
-
-      <div class="card">
-        <div class="util-bar">
-          <button id="btn-wakelock" title="Mantener pantalla encendida">☀️ Pantalla fija</button>
-          <button id="btn-fullscreen" title="Pantalla completa">⛶ Fullscreen</button>
+          <button data-accion="comer" title="Comer">🌿</button>
+          <button data-accion="jugar" title="Jugar">⚽</button>
+          <button data-accion="mimar" title="Mimar">❤️</button>
+          <button data-accion="dormir" id="btn-dormir" title="Dormir">💤</button>
+          <button id="btn-agua" title="Tomé un vaso de agua">💧</button>
         </div>
       </div>
     </section>
 
-    <!-- Columna derecha: Cuotas IA + PC/GPU + Control Deck + Pomodoro/Alarmas -->
+    <!-- Columna derecha: Carruseles deslizables -->
     <section class="col-der">
-      <!-- Antigravity -->
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title">🚀 Antigravity · Modelos</span>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <span class="badge" id="agy-badge">...</span>
-            <button class="btn-chico" id="btn-agy-refresh" title="Actualizar cuotas">↻</button>
-          </div>
-        </div>
-        <div id="agy-body"><div class="nota">Consultando cuotas…</div></div>
-      </div>
-
-      <!-- Claude Code -->
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title">🧪 Claude Code · Límites</span>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <span class="badge" id="claude-badge">—</span>
-            <button class="btn-chico" id="btn-claude-api" title="Activar o consultar API directa de Anthropic">API</button>
-          </div>
-        </div>
-        <div class="probeta">
-          <div class="tit"><span>Sesión (5 h)</span><b id="p-cinco">—</b></div>
-          <div class="tubo"><i id="t-cinco"></i><span class="marcas"></span></div>
-          <div class="sub" id="s-cinco"></div>
-        </div>
-        <div class="probeta">
-          <div class="tit"><span>Semana</span><b id="p-semana">—</b></div>
-          <div class="tubo"><i id="t-semana"></i><span class="marcas"></span></div>
-          <div class="sub" id="s-semana"></div>
-        </div>
-        <div id="uso-nota" class="nota"></div>
-        <div id="claude-ritmo" class="nota"></div>
-      </div>
-
-      <!-- PC & GPU (Gaming Monitor) -->
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title">🖥️ PC &amp; GPU</span>
-          <span class="badge" id="pc-host">—</span>
-        </div>
-        <div id="pc-body"><div class="nota">Midiendo hardware…</div></div>
-      </div>
-
-      <!-- Control Deck Multimedia -->
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title">🎮 Control rápido</span>
-          <span class="badge">Windows</span>
-        </div>
-        <div class="media-grid">
-          <button class="media-btn" data-media="prev">⏮<span>Anterior</span></button>
-          <button class="media-btn" data-media="playPause">⏯<span>Play/Pausa</span></button>
-          <button class="media-btn" data-media="next">⏭<span>Siguiente</span></button>
-          <button class="media-btn" data-media="volDown">🔉<span>Vol −</span></button>
-          <button class="media-btn" data-media="mute">🔇<span>Silenciar</span></button>
-          <button class="media-btn" data-media="volUp">🔊<span>Vol +</span></button>
-        </div>
-      </div>
-
-      <!-- Pomodoro -->
-      <div class="card" data-tj="pomodoro">
-        <div class="card-head">
-          <span class="card-title">⏱️ Pomodoro</span>
-          <span class="badge" id="pomo-hoy">0 hoy</span>
-        </div>
-        <div class="probeta">
-          <div class="tit"><span id="pomo-fase">Pomodoro</span><b id="pomo-reloj">25:00</b></div>
-          <div class="barra"><i id="pomo-barra"></i></div>
-          <div class="sub" id="pomo-sub"></div>
-        </div>
-        <div class="pomo-botones">
-          <button class="btn-primario" id="pomo-alternar">Iniciar experimento</button>
-          <button id="pomo-detener">Detener</button>
-        </div>
-      </div>
-
-      <!-- Alarmas -->
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title">⏰ Alarmas</span>
-        </div>
-        <div id="alarmas-lista"></div>
-        <div class="alarma-form">
-          <input type="time" id="alarma-hora" aria-label="Hora">
-          <input type="text" id="alarma-msg" placeholder="Recordatorio…" maxlength="80">
-          <select id="alarma-rep">
-            <option value="una">Una vez</option>
-            <option value="diaria">Diaria</option>
-            <option value="laborables">Lun–vie</option>
-          </select>
-          <button class="btn-primario" id="alarma-agregar">+</button>
+      <div class="carruseles-grid" id="carruseles"></div>
+      <div class="car-pie">
+        <span class="nota">Desliza horizontalmente o usa ‹ › para cambiar tarjeta</span>
+        <div class="car-pie-btns">
+          <button class="btn-chico" id="car-agregar">+ Panel</button>
+          <button class="btn-chico" id="car-restablecer">Restablecer</button>
         </div>
       </div>
     </section>
   </main>
 
+  <!-- Depósito de tarjetas (koala.js y desk.js actualizan sus IDs aunque no estén visibles) -->
+  <div id="deposito" hidden>
+    <!-- 1. Antigravity -->
+    <div class="tj" data-tj="antigravity">
+      <div class="tj-top">
+        <span class="badge" id="agy-badge">...</span>
+        <button class="btn-chico" id="btn-agy-refresh" title="Actualizar cuotas">↻ Actualizar</button>
+      </div>
+      <div id="agy-body"><div class="nota">Consultando cuotas…</div></div>
+    </div>
+
+    <!-- 2. Claude Code -->
+    <div class="tj" data-tj="claude">
+      <div class="tj-top">
+        <span class="badge" id="claude-badge">—</span>
+        <button class="btn-chico" id="btn-claude-api" title="Activar o consultar API directa de Anthropic">API Anthropic</button>
+      </div>
+      <div class="probeta">
+        <div class="tit"><span>Sesión (5 h)</span><b id="p-cinco">—</b></div>
+        <div class="tubo"><i id="t-cinco"></i><span class="marcas"></span></div>
+        <div class="sub" id="s-cinco"></div>
+      </div>
+      <div class="probeta">
+        <div class="tit"><span>Semana</span><b id="p-semana">—</b></div>
+        <div class="tubo"><i id="t-semana"></i><span class="marcas"></span></div>
+        <div class="sub" id="s-semana"></div>
+      </div>
+      <div id="uso-nota" class="nota"></div>
+      <div id="claude-ritmo" class="nota"></div>
+    </div>
+
+    <!-- 3. PC & GPU -->
+    <div class="tj" data-tj="pc">
+      <div class="tj-top">
+        <span class="badge" id="pc-host">—</span>
+        <span class="nota" id="pc-uptime"></span>
+      </div>
+      <div id="pc-body"><div class="nota">Midiendo hardware…</div></div>
+    </div>
+
+    <!-- 4. Música & Control Deck -->
+    <div class="tj" data-tj="musica">
+      <div class="now-playing" id="now-playing">
+        <div class="np-icon" id="np-icon">🎵</div>
+        <div class="np-info">
+          <div class="np-title" id="np-title">Sin música activa</div>
+          <div class="np-artist" id="np-artist">Reproduce Spotify, YouTube o VLC en tu PC</div>
+        </div>
+      </div>
+      <div class="media-grid">
+        <button class="media-btn" data-media="prev">⏮<span>Anterior</span></button>
+        <button class="media-btn" data-media="playPause" id="btn-playpause">⏯<span>Play/Pausa</span></button>
+        <button class="media-btn" data-media="next">⏭<span>Siguiente</span></button>
+        <button class="media-btn" data-media="volDown">🔉<span>Vol −</span></button>
+        <button class="media-btn" data-media="mute">🔇<span>Silenciar</span></button>
+        <button class="media-btn" data-media="volUp">🔊<span>Vol +</span></button>
+      </div>
+    </div>
+
+    <!-- 5. Pomodoro -->
+    <div class="tj" data-tj="pomodoro">
+      <div class="tj-top">
+        <span class="badge" id="pomo-hoy">0 hoy</span>
+      </div>
+      <div class="probeta">
+        <div class="tit"><span id="pomo-fase">Pomodoro</span><b id="pomo-reloj">25:00</b></div>
+        <div class="barra"><i id="pomo-barra"></i></div>
+        <div class="sub" id="pomo-sub"></div>
+      </div>
+      <div class="pomo-botones">
+        <button class="btn-primario" id="pomo-alternar">Iniciar experimento</button>
+        <button id="pomo-detener">Detener</button>
+      </div>
+    </div>
+
+    <!-- 6. Alarmas -->
+    <div class="tj" data-tj="alarmas">
+      <div id="alarmas-lista"></div>
+      <div class="alarma-form">
+        <input type="time" id="alarma-hora" aria-label="Hora">
+        <input type="text" id="alarma-msg" placeholder="Recordatorio…" maxlength="80">
+        <select id="alarma-rep">
+          <option value="una">Una vez</option>
+          <option value="diaria">Diaria</option>
+          <option value="laborables">Lun–vie</option>
+        </select>
+        <button class="btn-primario" id="alarma-agregar">+</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Puente para que koala.js funcione idéntico que en VS Code
     window.KOALA_DIC = {};
     window.KOALA_LOCALE = 'es-MX';
     window.koalaT = function (s) {

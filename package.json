@@ -1,0 +1,10 @@
+{
+  "name": "koala-desk-monitor",
+  "version": "1.0.0",
+  "description": "Panel de escritorio para celular Android (Moto G06) con el Koala científico, cuotas de Antigravity y Claude Code, monitor de PC/GPU y controles multimedia.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "license": "MIT"
+}

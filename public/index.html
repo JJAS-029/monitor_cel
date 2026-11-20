@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icono.png">
+  <title>Koala Desk Monitor</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="toast"></div>
+
+  <main class="desk">
+    <!-- Columna izquierda: Reloj + Koala + Necesidades -->
+    <section class="col-izq">
+      <div class="card reloj-card">
+        <div>
+          <div class="reloj-hora" id="reloj-hora">--:--</div>
+          <div class="reloj-fecha" id="reloj-fecha">---</div>
+        </div>
+        <div class="reloj-der">
+          <div class="clima-mini" id="clima-mini" title="Toca para elegir ciudad">🌡️ --</div>
+          <div class="conn-dot" id="conn-dot"><i></i><span id="conn-txt">Conectando</span></div>
+        </div>
+      </div>
+
+      <div id="alertas"></div>
+
+      <div class="card koala-card">
+        <canvas id="lienzo" title="Toca para mimar al koala"></canvas>
+        <div id="estado">Preparando el laboratorio…</div>
+
+        <div class="fila"><span>Saciedad</span><div class="barra"><i id="b-saciedad"></i></div><span class="num" id="n-saciedad"></span></div>
+        <div class="fila"><span>Ánimo</span><div class="barra"><i id="b-animo"></i></div><span class="num" id="n-animo"></span></div>
+        <div class="fila"><span id="l-energia">Energía</span><div class="barra"><i id="b-energia"></i></div><span class="num" id="n-energia"></span></div>
+        <div class="sub" id="s-energia"></div>
+        <div class="fila"><span>Agua</span><div class="barra"><i id="b-agua"></i></div><span class="num" id="n-agua"></span></div>
+
+        <div class="botones">
+          <button data-accion="comer">🌿 Comer</button>
+          <button data-accion="jugar">⚽ Jugar</button>
+          <button data-accion="mimar">❤️ Mimar</button>
+          <button data-accion="dormir" id="btn-dormir">💤 Dormir</button>
+        </div>
+        <button class="boton-agua" id="btn-agua">💧 Tomé un vaso de agua</button>
+      </div>
+
+      <div class="card">
+        <div class="util-bar">
+          <button id="btn-wakelock" title="Mantener pantalla encendida">☀️ Pantalla fija</button>
+          <button id="btn-fullscreen" title="Pantalla completa">⛶ Fullscreen</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Columna derecha: Cuotas IA + PC/GPU + Control Deck + Pomodoro/Alarmas -->
+    <section class="col-der">
+      <!-- Antigravity -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">🚀 Antigravity · Modelos</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span class="badge" id="agy-badge">...</span>
+            <button class="btn-chico" id="btn-agy-refresh" title="Actualizar cuotas">↻</button>
+          </div>
+        </div>
+        <div id="agy-body"><div class="nota">Consultando cuotas…</div></div>
+      </div>
+
+      <!-- Claude Code -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">🧪 Claude Code · Límites</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span class="badge" id="claude-badge">—</span>
+            <button class="btn-chico" id="btn-claude-api" title="Activar o consultar API directa de Anthropic">API</button>
+          </div>
+        </div>
+        <div class="probeta">
+          <div class="tit"><span>Sesión (5 h)</span><b id="p-cinco">—</b></div>
+          <div class="tubo"><i id="t-cinco"></i><span class="marcas"></span></div>
+          <div class="sub" id="s-cinco"></div>
+        </div>
+        <div class="probeta">
+          <div class="tit"><span>Semana</span><b id="p-semana">—</b></div>
+          <div class="tubo"><i id="t-semana"></i><span class="marcas"></span></div>
+          <div class="sub" id="s-semana"></div>
+        </div>
+        <div id="uso-nota" class="nota"></div>
+        <div id="claude-ritmo" class="nota"></div>
+      </div>
+
+      <!-- PC & GPU (Gaming Monitor) -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">🖥️ PC &amp; GPU</span>
+          <span class="badge" id="pc-host">—</span>
+        </div>
+        <div id="pc-body"><div class="nota">Midiendo hardware…</div></div>
+      </div>
+
+      <!-- Control Deck Multimedia -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">🎮 Control rápido</span>
+          <span class="badge">Windows</span>
+        </div>
+        <div class="media-grid">
+          <button class="media-btn" data-media="prev">⏮<span>Anterior</span></button>
+          <button class="media-btn" data-media="playPause">⏯<span>Play/Pausa</span></button>
+          <button class="media-btn" data-media="next">⏭<span>Siguiente</span></button>
+          <button class="media-btn" data-media="volDown">🔉<span>Vol −</span></button>
+          <button class="media-btn" data-media="mute">🔇<span>Silenciar</span></button>
+          <button class="media-btn" data-media="volUp">🔊<span>Vol +</span></button>
+        </div>
+      </div>
+
+      <!-- Pomodoro -->
+      <div class="card" data-tj="pomodoro">
+        <div class="card-head">
+          <span class="card-title">⏱️ Pomodoro</span>
+          <span class="badge" id="pomo-hoy">0 hoy</span>
+        </div>
+        <div class="probeta">
+          <div class="tit"><span id="pomo-fase">Pomodoro</span><b id="pomo-reloj">25:00</b></div>
+          <div class="barra"><i id="pomo-barra"></i></div>
+          <div class="sub" id="pomo-sub"></div>
+        </div>
+        <div class="pomo-botones">
+          <button class="btn-primario" id="pomo-alternar">Iniciar experimento</button>
+          <button id="pomo-detener">Detener</button>
+        </div>
+      </div>
+
+      <!-- Alarmas -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">⏰ Alarmas</span>
+        </div>
+        <div id="alarmas-lista"></div>
+        <div class="alarma-form">
+          <input type="time" id="alarma-hora" aria-label="Hora">
+          <input type="text" id="alarma-msg" placeholder="Recordatorio…" maxlength="80">
+          <select id="alarma-rep">
+            <option value="una">Una vez</option>
+            <option value="diaria">Diaria</option>
+            <option value="laborables">Lun–vie</option>
+          </select>
+          <button class="btn-primario" id="alarma-agregar">+</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Puente para que koala.js funcione idéntico que en VS Code
+    window.KOALA_DIC = {};
+    window.KOALA_LOCALE = 'es-MX';
+    window.koalaT = function (s) {
+      var a = arguments;
+      return String(s).replace(/\{(\d+)\}/g, function (m, i) { return a[+i + 1] === undefined ? m : String(a[+i + 1]); });
+    };
+    window.acquireVsCodeApi = function () {
+      return {
+        postMessage: function (msg) {
+          fetch('/api/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(msg),
+          }).catch(function () {});
+        },
+        getState: function () { return null; },
+        setState: function () {},
+      };
+    };
+  </script>
+  <script src="/koala.js"></script>
+  <script src="/desk.js"></script>
+</body>
+</html>

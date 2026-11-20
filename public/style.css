@@ -247,7 +247,53 @@ button:active {
   align-items: center;
   gap: 7px;
   font-size: 11px;
-  margin: 2px 0;
+  margin: 1px 0;
+}
+/* Indicadores del Koala con líneas senoidales M3 Expressive */
+.fila .barra {
+  position: relative;
+  height: 12px;
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+}
+.fila .barra::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--md-surface-highest);
+}
+.fila .barra::after {
+  content: "";
+  position: absolute;
+  right: 1px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--md-on-surface-variant);
+  opacity: 0.6;
+}
+.fila .barra > i {
+  position: relative;
+  z-index: 1;
+  display: block;
+  height: 12px;
+  width: 50%;
+  border-radius: 0;
+  background: var(--md-green);
+  -webkit-mask-image: var(--wave-mask);
+  mask-image: var(--wave-mask);
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  -webkit-mask-size: 24px 12px;
+  mask-size: 24px 12px;
+  animation: waveFlow 2.2s linear infinite;
+  transition: width 0.55s var(--spring-spatial), background-color 0.35s;
 }
 .barra {
   position: relative;
@@ -719,35 +765,58 @@ button:active {
   animation: waveFlow 1.2s linear infinite;
 }
 
-/* Connected Button Groups para Control Deck */
+/* Connected Button Groups con formas expresivas M3 para Control Deck */
 .media-group {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  grid-template-columns: 1fr 1.25fr 1fr;
+  gap: 6px;
+  align-items: stretch;
 }
 .media-btn {
-  padding: 11px 6px;
+  padding: 12px 6px;
   font-size: 19px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 3px;
-  border-radius: 10px;
+  border-radius: 16px;
   background: var(--md-surface-high);
+  transition:
+    background 0.25s var(--spring-effects),
+    transform 0.34s var(--spring-spatial),
+    border-radius 0.34s var(--spring-spatial);
 }
-.media-btn:first-child { border-radius: 24px 10px 10px 24px; }
-.media-btn:last-child  { border-radius: 10px 24px 24px 10px; }
+/* Formas expresivas asimétricas tipo Material Shape Library */
+.media-btn:first-child {
+  border-radius: 28px 12px 12px 28px;
+  background: #232a38;
+}
+.media-btn:last-child {
+  border-radius: 12px 28px 28px 12px;
+  background: #232a38;
+}
 .media-btn.primaria {
   background: var(--md-music-container);
   color: #f3e8ff;
-  border-radius: 16px;
+  border-radius: 999px; /* Píldora en pausa */
+}
+.media-btn.primaria.playing {
+  background: #22543d;
+  color: #c6f6d5;
+  border-radius: 18px; /* Morph a squircle expresivo al reproducir */
+}
+.media-group:last-of-type .media-btn:nth-child(2) {
+  border-radius: 22px 10px 22px 10px; /* Hoja / squircle diagonal para Silenciar */
+  background: #33252a;
 }
 .media-btn:active {
-  transform: scale(0.92);
-  border-radius: 18px;
+  transform: scale(0.9);
+  border-radius: 26px !important;
 }
-.media-btn span { font-size: 10px; color: var(--md-on-surface-variant); font-weight: 600; }
+.media-btn span { font-size: 10px; color: var(--md-on-surface-variant); font-weight: 700; }
 .media-btn.primaria span { color: #e9ddff; }
+.media-btn.primaria.playing span { color: #bbf7d0; }
 
 /* Pomodoro con onda senoidal */
 .pomo-botones {

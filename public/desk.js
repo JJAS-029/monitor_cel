@@ -311,14 +311,20 @@
       if (wave) wave.classList.toggle('playing', playing);
       title.textContent = media.titulo || 'Reproduciendo…';
       artist.textContent = [media.artista, media.album, media.app].filter(Boolean).join(' · ');
-      if (btnPlay) btnPlay.innerHTML = playing ? '⏸<span>Pausar</span>' : '▶️<span>Reproducir</span>';
+      if (btnPlay) {
+        btnPlay.classList.toggle('playing', playing);
+        btnPlay.innerHTML = playing ? '⏸<span>Pausar</span>' : '▶️<span>Reproducir</span>';
+      }
     } else {
       if (icon) icon.classList.remove('playing');
       if (glyph) glyph.textContent = '🎵';
       if (wave) wave.classList.remove('playing');
       title.textContent = 'Sin música activa';
       artist.textContent = 'Reproduce Spotify, YouTube o VLC en tu PC';
-      if (btnPlay) btnPlay.innerHTML = '⏯<span>Play/Pausa</span>';
+      if (btnPlay) {
+        btnPlay.classList.remove('playing');
+        btnPlay.innerHTML = '⏯<span>Play/Pausa</span>';
+      }
     }
   }
 

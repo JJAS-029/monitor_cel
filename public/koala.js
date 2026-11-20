@@ -2430,13 +2430,21 @@
     }
     const le = $('l-energia'), se = $('s-energia');
     if (le) le.title = est.energiaLigada ? T('Energía = lo que te queda de la sesión de 5 h de Claude Code') : T('Energía del koala (sin dato oficial de Claude Code)');
-    if (se) se.textContent = est.energiaLigada ? '⚡ ' + T('ligada a tu sesión de 5 h · se recarga {0}', horaReinicio()) : '';
+    if (se) {
+      const v = est.uso && est.uso.cinco;
+      if (est.energiaLigada && v && v.reinicio) {
+        const d = new Date(v.reinicio);
+        se.textContent = '⚡ ' + T('se recarga {0}', String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'));
+      } else {
+        se.textContent = est.energiaLigada ? '⚡ ' + T('ligada a tus cuotas IA') : '';
+      }
+    }
     const r = est.rutina;
     const ba = $('b-agua'), na = $('n-agua');
     if (r && ba) { ba.style.width = Math.min(100, (100 * r.agua) / r.metaAgua) + '%'; ba.style.background = 'var(--vscode-charts-blue, #3794ff)'; }
     if (r && na) na.textContent = r.agua + '/' + r.metaAgua;
     const bd = $('btn-dormir');
-    if (bd) bd.textContent = est.durmiendo ? T('Despertar') : T('Dormir');
+    if (bd) { bd.textContent = est.durmiendo ? '☀️' : '💤'; bd.title = est.durmiendo ? T('Despertar') : T('Dormir'); }
   }
 
   function horaReinicio() {

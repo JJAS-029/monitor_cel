@@ -27,6 +27,14 @@
             <span class="clima-mini" id="clima-mini" title="Toca para elegir ciudad">🌍</span>
             <button class="icon-btn" id="btn-wakelock" title="Mantener pantalla encendida">☀️</button>
             <button class="icon-btn" id="btn-fullscreen" title="Pantalla completa">⛶</button>
+            <div class="menu-wrap">
+              <button class="icon-btn" id="btn-menu" title="Paneles">⋮</button>
+              <div class="menu-pop" id="menu-pop" hidden>
+                <button id="menu-agregar">+ Agregar panel</button>
+                <button id="menu-quitar">− Quitar último panel</button>
+                <button id="menu-restablecer">↺ Restablecer paneles</button>
+              </div>
+            </div>
           </div>
           <div class="conn-dot" id="conn-dot"><i></i><span id="conn-txt">Conectando</span></div>
         </div>
@@ -73,10 +81,10 @@
   <div id="deposito" hidden>
     <!-- 1. Cuotas IA unificadas (Antigravity + Claude Code separados por color) -->
     <div class="tj" data-tj="ia">
-      <!-- Bloque Antigravity / Gemini (Azul / Celeste) -->
+      <!-- Bloque Antigravity (Azul / Celeste) -->
       <div class="ia-bloque gemini-sec">
         <div class="ia-sec-head">
-          <span class="ia-sec-title gemini">✨ Antigravity · Gemini</span>
+          <span class="ia-sec-title gemini">✨ Antigravity</span>
           <div style="display:flex;gap:5px;align-items:center;">
             <span class="badge gemini" id="agy-badge">...</span>
             <button class="btn-chico" id="btn-agy-refresh" title="Actualizar cuotas">↻</button>
@@ -95,12 +103,12 @@
           </div>
         </div>
         <div class="probeta">
-          <div class="tit"><span>Sesión (5 h)</span><b id="p-cinco">—</b></div>
+          <div class="tit"><span>Sesión (5 h)</span><span><b id="p-cinco">—</b> <small class="etq-uso">usado</small></span></div>
           <div class="tubo"><i id="t-cinco"></i><span class="marcas"></span></div>
           <div class="sub" id="s-cinco"></div>
         </div>
         <div class="probeta">
-          <div class="tit"><span>Semana</span><b id="p-semana">—</b></div>
+          <div class="tit"><span>Semana</span><span><b id="p-semana">—</b> <small class="etq-uso">usado</small></span></div>
           <div class="tubo"><i id="t-semana"></i><span class="marcas"></span></div>
           <div class="sub" id="s-semana"></div>
         </div>

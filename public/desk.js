@@ -16,7 +16,7 @@
   const TARJETAS = [
     ['ia', '✨ Cuotas IA'],
     ['pc', '🖥️ PC & GPU'],
-    ['musica', '🎵 Música & Control'],
+    ['musica', '🎵 Música'],
     ['pomodoro', '⏱️ Pomodoro'],
     ['alarmas', '⏰ Alarmas'],
   ];
@@ -68,7 +68,6 @@
         `<select class="car-sel" data-car="sel">${opciones}</select>` +
         `<span class="car-pos">${IDS.indexOf(id) + 1}/${IDS.length}</span>` +
         `<button data-car="next" title="Siguiente">›</button>` +
-        (carruseles.length > 1 ? `<button data-car="quitar" title="Quitar panel">×</button>` : `<span></span>`) +
         `</div><div class="car-cuerpo"></div><div class="car-puntos">` +
         IDS.map((x) => `<i data-dot="${x}" class="${x === id ? 'sel' : ''}"></i>`).join('') +
         `</div>`;
@@ -150,18 +149,40 @@
     if (Math.abs(dx) > 40 && Math.abs(dx) > 1.4 * Math.abs(dy)) moverCarrusel(i, dx < 0 ? 1 : -1);
   });
 
-  $('car-agregar').addEventListener('click', () => {
+  function agregarPanel() {
     if (carruseles.length >= MAX_CARRUSELES) return;
     const libre = IDS.find((x) => !carruseles.includes(x));
     if (!libre) return;
     carruseles.push(libre);
     guardarCarruseles();
     armarCarruseles();
-  });
-  $('car-restablecer').addEventListener('click', () => {
+  }
+  function quitarUltimoPanel() {
+    if (carruseles.length <= 1) return;
+    carruseles.pop();
+    guardarCarruseles();
+    armarCarruseles();
+  }
+  function restablecerPaneles() {
     carruseles = INICIO.slice();
     guardarCarruseles();
     armarCarruseles();
+  }
+
+  $('car-agregar').addEventListener('click', agregarPanel);
+  $('car-restablecer').addEventListener('click', restablecerPaneles);
+
+  // Menú ⋮ en la cabecera del reloj (para pantallas bajas)
+  const menuPop = $('menu-pop');
+  $('btn-menu').addEventListener('click', (e) => {
+    e.stopPropagation();
+    menuPop.hidden = !menuPop.hidden;
+  });
+  $('menu-agregar').addEventListener('click', () => { agregarPanel(); menuPop.hidden = true; });
+  $('menu-quitar').addEventListener('click', () => { quitarUltimoPanel(); menuPop.hidden = true; });
+  $('menu-restablecer').addEventListener('click', () => { restablecerPaneles(); menuPop.hidden = true; });
+  document.addEventListener('click', (e) => {
+    if (menuPop && !menuPop.hidden && !e.target.closest('.menu-wrap')) menuPop.hidden = true;
   });
 
   armarCarruseles();
@@ -194,16 +215,16 @@
     if (!ms) return '';
     const min = Math.max(0, Math.round((Date.now() - ms) / 60000));
     if (min < 1) return 'ahora';
-    if (min < 60) return `hace ${min} min`;
-    return `hace ${Math.floor(min / 60)} h`;
+    if (min < 60) return `${min} min`;
+    return `${Math.floor(min / 60)} h`;
   }
-  function faltaPara(v) {
+  function faltaCorto(v) {
     if (!v) return '';
     if (typeof v === 'string') return v;
     const min = Math.max(0, Math.round((v - Date.now()) / 60000));
-    if (min < 60) return `en ${min} min`;
+    if (min < 60) return `${min}m`;
     const h = Math.floor(min / 60);
-    return h < 24 ? `en ${h} h ${min % 60} min` : `en ${Math.floor(h / 24)} d ${h % 24} h`;
+    return h < 24 ? `${h}h ${min % 60}m` : `${Math.floor(h / 24)}d ${h % 24}h`;
   }
   function colorNivel(v, ambar, rojo) {
     return v >= rojo ? 'rojo' : v >= ambar ? 'ambar' : 'verde';
@@ -218,12 +239,13 @@
   }
   function metrica(nombre, valor, pct, clase) {
     const w = Math.max(0, Math.min(100, pct || 0));
-    return `<div class="metrica"><span class="nom">${esc(nombre)}</span>` +
+    return `<div class="metrica-v">` +
+      `<div class="metrica-top"><span class="nom">${esc(nombre)}</span><span class="val">${esc(valor)}</span></div>` +
       `<div class="wavy-track"><i class="${clase || ''}" style="width:${w}%"></i></div>` +
-      `<span class="val">${esc(valor)}</span></div>`;
+      `</div>`;
   }
 
-  // ---------- Pintar Antigravity (diferenciado por color, con líneas senoidales M3 Expressive) ----------
+  // ---------- Pintar Antigravity (compacto: reinicio en línea + "libre" explícito) ----------
   function pintarAntigravity(ag) {
     const badge = $('agy-badge');
     const body = $('agy-body');
@@ -235,11 +257,10 @@
       body.innerHTML = ag.modelos.map((m) => {
         const rest = m.restantePct != null ? m.restantePct : (m.usadoPct != null ? 100 - m.usadoPct : 0);
         const col = colorAntigravity(m, rest);
-        const sub = m.reinicio ? `Reinicia ${faltaPara(m.reinicio)}` : '';
+        const reset = m.reinicio ? `<small class="agy-reset">↻ ${esc(faltaCorto(m.reinicio))}</small>` : '';
         return `<div class="agy-item">` +
-          `<div class="agy-top"><b>${esc(m.nombre)}</b><span>${rest}%</span></div>` +
+          `<div class="agy-top"><b>${esc(m.nombre)}</b><span>${reset} ${rest}% <small class="etq-uso">libre</small></span></div>` +
           `<div class="wavy-track"><i class="${col}" style="width:${rest}%"></i></div>` +
-          (sub ? `<div class="agy-sub">${esc(sub)}</div>` : '') +
           `</div>`;
       }).join('');
       return;
@@ -278,7 +299,7 @@
     if (s.gpu) {
       const g = s.gpu;
       html += `<div class="gpu-chips">` +
-        `<div class="chip"><b>${cpu}%</b><span>CPU (${s.nucleos}c)</span></div>` +
+        `<div class="chip" title="${s.nucleos} núcleos"><b>${cpu}%</b><span>CPU</span></div>` +
         `<div class="chip"><b>${ramPct}%</b><span>RAM</span></div>` +
         `<div class="chip"><b>${g.uso != null ? g.uso + '%' : '—'}</b><span>GPU</span></div>` +
         `<div class="chip"><b>${g.temperatura != null ? g.temperatura + '°C' : '—'}</b><span>Temp</span></div>` +
@@ -292,7 +313,9 @@
     }
 
     if (s.memoria) {
-      html += metrica('RAM', `${bytes(s.memoria.usada)}/${bytes(s.memoria.total)}`, s.memoria.pct, colorNivel(s.memoria.pct, 75, 90));
+      const uG = Math.round(s.memoria.usada / 1024 ** 3);
+      const tG = Math.round(s.memoria.total / 1024 ** 3);
+      html += metrica('RAM', `${uG}/${tG} GB`, s.memoria.pct, colorNivel(s.memoria.pct, 75, 90));
     }
     for (const d of s.discos || []) {
       html += metrica(`Disco ${d.ruta}`, `${Math.round(d.pct)}%`, d.pct, colorNivel(d.pct, 80, 92));

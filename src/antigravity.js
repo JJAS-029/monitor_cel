@@ -96,14 +96,20 @@ function parsearSalidaAgy(stdout) {
     if (grupos) {
       const etiquetaVentana = (w, nombreBucket) => {
         if (w === '5h') return '5 h';
-        if (w === 'weekly') return 'Semana';
+        if (w === 'weekly') return 'Sem.';
         if (/5-?hour|five hour/i.test(nombreBucket || '')) return '5 h';
-        if (/weekly/i.test(nombreBucket || '')) return 'Semana';
+        if (/weekly/i.test(nombreBucket || '')) return 'Sem.';
         return w || nombreBucket || '';
+      };
+      const nombreCortoGrupo = (raw) => {
+        const s = String(raw || 'Antigravity').replace(/\s+models$/i, '').trim();
+        if (/claude\s+and\s+gpt/i.test(s)) return 'Claude y GPT';
+        if (/gemini\s*4\s*argon/i.test(s)) return 'Argon';
+        return s;
       };
       for (const g of grupos) {
         if (!g || !Array.isArray(g.buckets)) continue;
-        const grupoNombre = String(g.name || 'Antigravity').replace(/\s+models$/i, '');
+        const grupoNombre = nombreCortoGrupo(g.name);
         // Ordenar 5h primero y luego weekly para lectura rápida
         const ordenados = g.buckets.slice().sort((a, b) => (a.window === '5h' ? -1 : b.window === '5h' ? 1 : 0));
         for (const b of ordenados) {

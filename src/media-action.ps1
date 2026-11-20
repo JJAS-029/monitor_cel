@@ -2,14 +2,23 @@
 
 $ErrorActionPreference = 'Stop'
 
-function Send-KeyChar([int]$code) {
-  $ws = New-Object -ComObject WScript.Shell
-  $ws.SendKeys([char]$code)
+function Send-VolumeKey([byte]$vk) {
+  Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public static class WinVolKey {
+  [DllImport("user32.dll")]
+  public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+}
+"@
+  # 0x0001 = KEYEVENTF_EXTENDEDKEY, 0x0002 = KEYEVENTF_KEYUP
+  [WinVolKey]::keybd_event($vk, 0, 1, [UIntPtr]::Zero)
+  [WinVolKey]::keybd_event($vk, 0, 3, [UIntPtr]::Zero)
 }
 
-if ($Action -eq 'volUp')   { Send-KeyChar 175; exit 0 }
-if ($Action -eq 'volDown') { Send-KeyChar 174; exit 0 }
-if ($Action -eq 'mute')    { Send-KeyChar 173; exit 0 }
+if ($Action -eq 'volUp')   { Send-VolumeKey 0xAF; exit 0 }
+if ($Action -eq 'volDown') { Send-VolumeKey 0xAE; exit 0 }
+if ($Action -eq 'mute')    { Send-VolumeKey 0xAD; exit 0 }
 
 # Para Play/Pause, Next y Prev usamos la sesión GSMTC directa (funciona incluso con juegos en pantalla completa)
 try {
@@ -38,6 +47,6 @@ try {
   # Respaldo con teclas multimedia si GSMTC no respondió
 }
 
-if ($Action -eq 'playPause') { Send-KeyChar 179; exit 0 }
-if ($Action -eq 'next')      { Send-KeyChar 176; exit 0 }
-if ($Action -eq 'prev')      { Send-KeyChar 177; exit 0 }
+if ($Action -eq 'playPause') { Send-VolumeKey 0xB3; exit 0 }
+if ($Action -eq 'next')      { Send-VolumeKey 0xB0; exit 0 }
+if ($Action -eq 'prev')      { Send-VolumeKey 0xB1; exit 0 }

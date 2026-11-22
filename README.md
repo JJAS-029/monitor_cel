@@ -24,7 +24,7 @@ Panel de escritorio independiente para celular Android (diseñado para **Moto G0
    ```powershell
    npm start
    ```
-2. En tu **Moto G06** (en la misma red Wi-Fi), abre Chrome y entra a la dirección `Celular` que imprime la consola (por ejemplo `http://192.168.1.11:4747`).
+2. En tu **Moto G06** (en la misma red Wi-Fi), abre Chrome y entra a la dirección `Nombre` (por ejemplo `http://iMaps.local:4747`, que no cambia aunque el router renueve la IP) o a `Celular` (`http://192.168.1.X:4747`).
 3. Pon el celular en **horizontal**, toca el menú `⋮` de Chrome → **Agregar a pantalla principal** para abrirlo a pantalla completa como app.
 4. *(Tip Moto G06)* Activa **Configuración → Batería → Protección contra sobrecarga** (limita la carga al 80 %).
 

@@ -797,11 +797,25 @@ setInterval(() => medirClima().then(enviarEstado), 15 * 60000);
 setInterval(() => consultarAnthropic(false), 60000);
 setInterval(() => consultarAntigravity(false), 60000);
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🐨 Koala Desk Monitor activo en puerto ${PORT}`);
+function imprimirDirecciones(titulo) {
+  console.log(`\n${titulo}`);
   console.log(`   Local:   http://localhost:${PORT}`);
+  console.log(`   Nombre:  http://${os.hostname()}.local:${PORT}`);
   for (const ip of obtenerIpsLocales()) {
     console.log(`   Celular: http://${ip}:${PORT}`);
   }
-  console.log('\nAbre la dirección "Celular" en Chrome de tu Moto G06 (en horizontal) y usa "Agregar a pantalla principal".\n');
+  console.log('\nAbre "Nombre" (no cambia al reiniciar) o "Celular" en Chrome de tu Moto G06 en horizontal.\n');
+}
+
+server.on('error', (err) => {
+  if (err && err.code === 'EADDRINUSE') {
+    imprimirDirecciones(`🐨 Koala Desk Monitor ya estaba corriendo en segundo plano (puerto ${PORT})`);
+    process.exit(0);
+  }
+  console.error('Error al iniciar Koala Desk Monitor:', err);
+  process.exit(1);
+});
+
+server.listen(PORT, '0.0.0.0', () => {
+  imprimirDirecciones(`🐨 Koala Desk Monitor activo en puerto ${PORT}`);
 });

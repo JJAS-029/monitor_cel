@@ -16,6 +16,8 @@ Panel de escritorio independiente para celular Android (diseñado para **Moto G0
 - **Tarjeta unificada `✨ Cuotas IA`:** cuotas restantes y reinicio de **Antigravity** (Gemini 5 h / Semana, Argon, Claude & GPT) en azul/celeste y **Claude Code** (5 h, Semana, ritmo y API directa) en terracota.
 - **Monitor de PC & GPU:** CPU, RAM, disco y **NVIDIA GPU** (`nvidia-smi`: uso %, temperatura °C y VRAM).
 - **Música & Control Deck:** lee la canción actual en Windows (**GSMTC**: Spotify, YouTube, Chrome, VLC) con forma *Cookie* giratoria, onda senoidal viva, controles multimedia directos y volumen maestro vía **Core Audio (`IAudioEndpointVolume`)**.
+- **Notificaciones en vivo (`🔔 Avisos`):** lee las notificaciones del navegador (Edge, Chrome, Firefox, Brave) y de Windows desde `wpndatabase.db` con `node:sqlite`, mostrando avisos emergentes y un historial filtrable.
+- **Bloqueo rápido de PC (`🔒`):** botón con doble toque de seguridad junto al reloj para bloquear Windows al instante (`LockWorkStation`).
 - **Carruseles deslizables** (hasta 4 paneles configurables), **Reloj**, **Clima**, **Pomodoro**, **Alarmas** y **☀️ Pantalla fija** (compatible incluso en HTTP local).
 
 ## Uso rápido

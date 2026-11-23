@@ -18,6 +18,7 @@ const idioma = require('./koala-core/idioma');
 const sistemaMod = require('./sistema');
 const antigravityMod = require('./antigravity');
 const controlesMod = require('./controles');
+const notificacionesMod = require('./notificaciones');
 
 const PORT = Number(process.env.PORT || 4747);
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
@@ -160,6 +161,11 @@ let proximaConsultaAgy = 0;
 
 let sistema = null;
 let mediaActual = null;
+let notificacionesLista = [];
+let notificacionesDisponibles = false;
+const notifsVistas = new Set();
+const notifsDescartadas = new Set();
+let notifsInicializadas = false;
 let servicios = [];
 let serviciosCaidos = new Set();
 let climaActual = null;
@@ -496,6 +502,30 @@ async function medirMedia() {
   }
 }
 
+function medirNotificaciones() {
+  const r = notificacionesMod.leerNotificaciones(15);
+  notificacionesDisponibles = !!r.disponible;
+  const filtradas = (r.lista || []).filter((n) => !notifsDescartadas.has(n.id));
+
+  if (notifsInicializadas) {
+    for (const n of filtradas) {
+      if (!notifsVistas.has(n.id)) {
+        notifsVistas.add(n.id);
+        const resumen = n.cuerpo ? `${n.titulo} — ${n.cuerpo}` : n.titulo;
+        notificar(`${n.icono} ${n.app}: ${resumen.slice(0, 95)}`);
+      }
+    }
+  } else {
+    for (const n of filtradas) notifsVistas.add(n.id);
+    notifsInicializadas = true;
+  }
+
+  if (JSON.stringify(filtradas) !== JSON.stringify(notificacionesLista)) {
+    notificacionesLista = filtradas;
+    enviarEstado();
+  }
+}
+
 async function medirServicios() {
   servicios = await sistemaMod.revisarServicios(config().get('servicios', []));
   const caidos = new Set(servicios.filter((s) => !s.ok).map((s) => s.url));
@@ -589,6 +619,7 @@ function construirEstado() {
     musica: mediaActual && mediaActual.titulo
       ? { titulo: mediaActual.titulo, artista: mediaActual.artista || '', app: mediaActual.app || '', sonando: mediaActual.estado === 'Playing' }
       : null,
+    notificaciones: { disponible: notificacionesDisponibles, lista: notificacionesLista },
     servicios,
     alertas: calcularAlertas(uso),
     costos: consumo.resumenCostos({
@@ -666,6 +697,16 @@ async function manejarMensaje(msg) {
     const r = await controlesMod.enviarTecla(msg.accion);
     setTimeout(medirMedia, 500);
     return r;
+  } else if (msg.tipo === 'bloquear') {
+    return controlesMod.bloquearPC();
+  } else if (msg.tipo === 'limpiarNotifs') {
+    for (const n of notificacionesLista) notifsDescartadas.add(n.id);
+    notificacionesLista = [];
+    enviarEstado();
+  } else if (msg.tipo === 'descartarNotif' && msg.id) {
+    notifsDescartadas.add(String(msg.id));
+    notificacionesLista = notificacionesLista.filter((n) => n.id !== String(msg.id));
+    enviarEstado();
   } else if (msg.tipo === 'setCiudad') {
     cfgLocal['clima.ciudad'] = String(msg.ciudad || '').trim();
     guardarConfigLocal();
@@ -775,6 +816,7 @@ leerEstadoAntigravity();
 consumo.escanearTranscripciones();
 medirSistema();
 medirMedia();
+medirNotificaciones();
 medirClima().then(enviarEstado);
 medirServicios();
 consultarAnthropic(false);
@@ -790,6 +832,7 @@ setInterval(() => pomodoro.revisar(Date.now(), lider.esLider()), 1000);
 setInterval(() => alarmas.revisar(new Date(), lider.esLider()), 15000);
 setInterval(medirSistema, 3000);
 setInterval(medirMedia, 4000);
+setInterval(medirNotificaciones, 4000);
 setInterval(vigilarCommits, 15000);
 setInterval(() => { consumo.escanearTranscripciones(); }, 30000);
 setInterval(medirServicios, 60000);

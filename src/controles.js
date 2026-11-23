@@ -58,4 +58,16 @@ function leerMediaActual() {
   });
 }
 
-module.exports = { enviarTecla, leerMediaActual };
+function bloquearPC() {
+  return new Promise((resolver) => {
+    if (process.platform !== 'win32') return resolver({ ok: false, error: 'Solo soportado en Windows' });
+    execFile(
+      'rundll32.exe',
+      ['user32.dll,LockWorkStation'],
+      { timeout: 4000, windowsHide: true },
+      (err) => resolver({ ok: !err, error: err ? err.message : null })
+    );
+  });
+}
+
+module.exports = { enviarTecla, leerMediaActual, bloquearPC };

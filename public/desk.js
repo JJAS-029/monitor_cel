@@ -17,6 +17,7 @@
     ['ia', '✨ Cuotas IA'],
     ['pc', '🖥️ PC & GPU'],
     ['musica', '🎵 Música'],
+    ['notificaciones', '🔔 Avisos'],
     ['pomodoro', '⏱️ Pomodoro'],
     ['alarmas', '⏰ Alarmas'],
   ];
@@ -126,6 +127,12 @@
     if (btn.dataset.media) enviar({ tipo: 'media', accion: btn.dataset.media });
     else if (btn.dataset.alarmaAlternar) enviar({ tipo: 'alternarAlarma', id: btn.dataset.alarmaAlternar });
     else if (btn.dataset.alarmaBorrar) enviar({ tipo: 'borrarAlarma', id: btn.dataset.alarmaBorrar });
+    else if (btn.dataset.notifDescartar) enviar({ tipo: 'descartarNotif', id: btn.dataset.notifDescartar });
+    else if (btn.dataset.nfiltro) {
+      notifFiltro = btn.dataset.nfiltro;
+      document.querySelectorAll('#notif-filtro .seg-btn').forEach((b) => b.classList.toggle('activo', b.dataset.nfiltro === notifFiltro));
+      pintarNotificaciones(ultimasNotifs);
+    }
   });
 
   document.addEventListener('change', (e) => {
@@ -401,6 +408,60 @@
       : '<div class="nota">Sin alarmas activas.</div>';
   }
 
+  // ---------- Pintar Notificaciones (Navegador + Windows) ----------
+  let notifFiltro = 'navegador';
+  let ultimasNotifs = { disponible: true, lista: [] };
+
+  function pintarNotificaciones(datos) {
+    ultimasNotifs = datos || { disponible: false, lista: [] };
+    const cont = $('notif-lista');
+    if (!cont) return;
+    if (!ultimasNotifs.disponible) {
+      cont.innerHTML = '<div class="nota">Solo disponible en Windows 10/11.</div>';
+      return;
+    }
+    const lista = (ultimasNotifs.lista || []).filter((n) => notifFiltro === 'todas' || n.navegador);
+    if (!lista.length) {
+      cont.innerHTML = `<div class="nota">${notifFiltro === 'navegador' ? 'Sin notificaciones del navegador (Edge/Chrome/Firefox).' : 'Sin notificaciones recientes.'}</div>`;
+      return;
+    }
+    cont.innerHTML = lista.slice(0, 8).map((n) =>
+      `<div class="notif-item${n.navegador ? ' nav' : ''}">` +
+      `<div class="notif-top"><span>${n.icono} <b>${esc(n.app)}</b> · ${esc(hace(n.ts))}</span>` +
+      `<button class="notif-x" data-notif-descartar="${esc(n.id)}" title="Ocultar">×</button></div>` +
+      `<div class="notif-tit">${esc(n.titulo)}</div>` +
+      (n.cuerpo ? `<div class="notif-cuerpo">${esc(n.cuerpo)}</div>` : '') +
+      `</div>`
+    ).join('');
+  }
+
+  $('btn-notif-limpiar').addEventListener('click', () => {
+    enviar({ tipo: 'limpiarNotifs' });
+  });
+
+  // ---------- Botón de bloqueo rápido (doble toque de seguridad) ----------
+  let lockConfirmTimer = null;
+  let lockConfirmando = false;
+  $('btn-lock').addEventListener('click', () => {
+    const b = $('btn-lock');
+    if (!lockConfirmando) {
+      lockConfirmando = true;
+      b.classList.add('peligro');
+      mostrarToast('🔒 Toca 🔒 de nuevo para bloquear la PC');
+      clearTimeout(lockConfirmTimer);
+      lockConfirmTimer = setTimeout(() => {
+        lockConfirmando = false;
+        b.classList.remove('peligro');
+      }, 3000);
+      return;
+    }
+    clearTimeout(lockConfirmTimer);
+    lockConfirmando = false;
+    b.classList.remove('peligro');
+    enviar({ tipo: 'bloquear' });
+    mostrarToast('🔒 PC bloqueada');
+  });
+
   // ---------- Botones fijos ----------
   $('btn-agy-refresh').addEventListener('click', () => {
     $('agy-badge').textContent = '…';
@@ -536,6 +597,7 @@
       pintarAntigravity(msg.antigravity);
       pintarSistema(msg.sistema);
       pintarMedia(msg.media);
+      pintarNotificaciones(msg.notificaciones);
       pintarExtras(msg);
     }
   }

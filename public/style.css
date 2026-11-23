@@ -187,6 +187,12 @@ button:active {
   color: var(--md-on-primary-container);
   border-radius: 11px; /* Morph de círculo a squircle al activarse */
 }
+.icon-btn.peligro {
+  background: #5c1f24;
+  color: var(--md-red);
+  border-radius: 11px;
+  transform: scale(1.08);
+}
 
 .clima-mini {
   font-size: 12px;
@@ -940,6 +946,70 @@ button:active {
   font: inherit;
   font-size: 11px;
   min-width: 0;
+}
+
+/* Notificaciones del navegador y Windows */
+.seg-group {
+  display: inline-flex;
+  gap: 3px;
+  background: var(--md-surface-low);
+  padding: 3px;
+  border-radius: 999px;
+}
+.seg-btn {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--md-on-surface-variant);
+}
+.seg-btn.activo {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+#notif-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.notif-item {
+  background: var(--md-surface-high);
+  border-radius: 16px;
+  padding: 7px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.notif-item.nav {
+  background: linear-gradient(155deg, #1f2a3d 0%, var(--md-surface-high) 75%);
+}
+.notif-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10.5px;
+  color: var(--md-on-surface-variant);
+}
+.notif-x {
+  background: transparent;
+  padding: 0 4px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--md-on-surface-variant);
+}
+.notif-tit {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.notif-cuerpo {
+  font-size: 11px;
+  color: var(--md-on-surface-variant);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Alertas y Toast */

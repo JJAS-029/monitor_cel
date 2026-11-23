@@ -25,6 +25,7 @@
         <div class="reloj-der">
           <div class="reloj-tools">
             <span class="clima-mini" id="clima-mini" title="Toca para elegir ciudad">🌍</span>
+            <button class="icon-btn" id="btn-lock" title="Bloquear PC (doble toque)">🔒</button>
             <button class="icon-btn" id="btn-wakelock" title="Mantener pantalla encendida">☀️</button>
             <button class="icon-btn" id="btn-fullscreen" title="Pantalla completa">⛶</button>
             <div class="menu-wrap">
@@ -185,6 +186,18 @@
         </select>
         <button class="btn-primario" id="alarma-agregar">+</button>
       </div>
+    </div>
+
+    <!-- 6. Notificaciones (Navegador + Windows) -->
+    <div class="tj" data-tj="notificaciones">
+      <div class="tj-top">
+        <div class="seg-group" id="notif-filtro">
+          <button class="seg-btn activo" data-nfiltro="navegador">🌐 Navegador</button>
+          <button class="seg-btn" data-nfiltro="todas">🔔 Todas</button>
+        </div>
+        <button class="btn-chico" id="btn-notif-limpiar" title="Ocultar notificaciones actuales">Limpiar</button>
+      </div>
+      <div id="notif-lista"><div class="nota">Sin notificaciones recientes.</div></div>
     </div>
   </div>
 

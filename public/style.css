@@ -98,12 +98,26 @@ html, body {
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: dense;
+  gap: 8px;
 }
-.carruseles-grid.uno { grid-template-columns: 1fr; }
+.carruseles-grid.uno { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+
+/* Tamaños tipo Windows Phone Live Tiles */
+.carrusel.t-1x1 { grid-column: span 1; grid-row: span 1; }
+.carrusel.t-1x2 { grid-column: span 1; grid-row: span 2; }
+.carrusel.t-2x1 { grid-column: span 2; grid-row: span 1; }
 
 @media (max-width: 700px) {
-  .carruseles-grid { grid-template-columns: 1fr; }
+  .carruseles-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  .carrusel.t-1x1, .carrusel.t-1x2, .carrusel.t-2x1 {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
 }
 
 /* Contenedores M3 Expressive */
@@ -367,12 +381,17 @@ button:active {
 }
 .car-cab {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto 32px;
+  grid-template-columns: 28px minmax(0, 1fr) auto 26px 28px;
   align-items: center;
-  gap: 3px;
-  padding: 7px 10px;
+  gap: 2px;
+  padding: 6px 8px;
   background: var(--md-surface-low);
 }
+.car-tam {
+  font-size: 13px !important;
+  opacity: 0.7;
+}
+.car-tam:hover { opacity: 1; }
 .car-cab button {
   background: transparent;
   padding: 0;
@@ -1056,10 +1075,68 @@ code {
 
 /* En pantallas táctiles, el deslizamiento reemplaza las flechas ‹ › para dar más ancho al título */
 @media (pointer: coarse) {
-  .car-cab { grid-template-columns: minmax(0, 1fr) auto; }
+  .car-cab { grid-template-columns: minmax(0, 1fr) auto 28px; }
   .car-cab [data-car="prev"],
   .car-cab [data-car="next"] { display: none; }
 }
+
+/* ============================================================
+ * ADAPTACIÓN POR TAMAÑO DE LIVE TILE (1x1 media altura · 2x1 ancho)
+ * ============================================================ */
+.carrusel.t-1x1 .car-cab { padding: 3px 7px; }
+.carrusel.t-1x1 .car-sel { font-size: 12.5px; padding: 1px 4px; }
+.carrusel.t-1x1 .car-cuerpo { padding: 5px 8px 4px; }
+.carrusel.t-1x1 .car-puntos { padding: 2px 0 4px; gap: 4px; }
+.carrusel.t-1x1 .car-puntos i { width: 5px; height: 5px; }
+.carrusel.t-1x1 .car-puntos i.sel { width: 15px; }
+
+/* Música en 1x1 (media altura): portada compacta + botones táctiles limpios sin texto redundante */
+.carrusel.t-1x1 [data-tj="musica"] { gap: 5px; }
+.carrusel.t-1x1 .now-playing { padding: 5px 8px; gap: 4px; border-radius: 15px; }
+.carrusel.t-1x1 .np-shape-wrap { width: 28px; height: 28px; }
+.carrusel.t-1x1 .np-glyph { font-size: 13px; }
+.carrusel.t-1x1 .np-title { font-size: 11.5px; }
+.carrusel.t-1x1 .np-artist { font-size: 9.5px; margin-top: 0; }
+.carrusel.t-1x1 .np-wave { height: 5px; }
+.carrusel.t-1x1 .np-wave.playing { height: 8px; }
+.carrusel.t-1x1 .media-group { gap: 4px; }
+.carrusel.t-1x1 .media-btn { padding: 5px 4px; font-size: 15px; gap: 0; }
+.carrusel.t-1x1 .media-btn span { display: none; }
+
+/* PC & GPU en 1x1 (media altura): chips compactos + barras clave */
+.carrusel.t-1x1 [data-tj="pc"] { gap: 4px; }
+.carrusel.t-1x1 [data-tj="pc"] .tj-top { display: none; }
+.carrusel.t-1x1 .gpu-chips { gap: 4px; }
+.carrusel.t-1x1 .chip { padding: 4px 2px; border-radius: 12px; }
+.carrusel.t-1x1 .chip b { font-size: 13px; }
+.carrusel.t-1x1 .chip span { font-size: 9px; }
+.carrusel.t-1x1 .metrica-v { margin-bottom: 1px; gap: 0; }
+.carrusel.t-1x1 .metrica-top { font-size: 10px; }
+.carrusel.t-1x1 .wavy-track, .carrusel.t-1x1 .wavy-track > i { height: 8px; }
+
+/* Pomodoro en 1x1 */
+.carrusel.t-1x1 [data-tj="pomodoro"] { gap: 5px; }
+.carrusel.t-1x1 [data-tj="pomodoro"] .tj-top { display: none; }
+.carrusel.t-1x1 .pomo-botones button { padding: 6px 8px; font-size: 11px; }
+
+/* Música en 2x1 (doble ancho horizontal): Now Playing a la izquierda, controles a la derecha */
+.carrusel.t-2x1 [data-tj="musica"] {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 6px 10px;
+  align-items: center;
+}
+.carrusel.t-2x1 .now-playing { grid-row: span 2; height: 100%; justify-content: center; }
+
+/* PC & GPU en 2x1 (doble ancho): chips a la izquierda, barras a la derecha */
+.carrusel.t-2x1 #pc-body {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 4px 12px;
+  align-items: center;
+}
+.carrusel.t-2x1 .gpu-chips { grid-template-columns: repeat(2, 1fr); }
 
 /* ============================================================
  * CORTE PARA PANTALLAS BAJAS EN HORIZONTAL (Moto G06: 820×360 / 770×360)

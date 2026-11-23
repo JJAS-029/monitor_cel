@@ -12,7 +12,7 @@
     }).catch(() => {});
   }
 
-  // ---------- Carruseles deslizables ----------
+  // ---------- Carruseles Bento / Live Tiles (1x1, 1x2, 2x1 tipo Windows Phone) ----------
   const TARJETAS = [
     ['ia', '✨ Cuotas IA'],
     ['pc', '🖥️ PC & GPU'],
@@ -22,20 +22,31 @@
     ['alarmas', '⏰ Alarmas'],
   ];
   const IDS = TARJETAS.map((x) => x[0]);
-  const INICIO = ['ia', 'pc'];
+  const TAMS = ['1x1', '1x2', '2x1'];
+  const INICIO = [
+    { id: 'ia', tam: '1x2' },
+    { id: 'pc', tam: '1x1' },
+    { id: 'musica', tam: '1x1' },
+  ];
   const MAX_CARRUSELES = 4;
-  const STORAGE_KEY = 'koalaDesk.carruseles.v2';
+  const STORAGE_KEY = 'koalaDesk.bento.v1';
 
-  let carruseles = INICIO.slice();
+  const clonarInicio = () => INICIO.map((t) => ({ id: t.id, tam: t.tam }));
+  const tamValido = (t) => TAMS.includes(t) ? t : '1x1';
+
+  let carruseles = clonarInicio();
   const paramPaneles = new URLSearchParams(window.location.search).get('paneles');
   if (paramPaneles) {
-    const lista = paramPaneles.split(',').map((s) => s.trim()).filter((x) => IDS.includes(x));
+    const lista = paramPaneles.split(',').map((s) => {
+      const [id, tam] = s.trim().split(':');
+      return IDS.includes(id) ? { id, tam: tamValido(tam || (id === 'ia' ? '1x2' : '1x1')) } : null;
+    }).filter(Boolean);
     if (lista.length) carruseles = lista.slice(0, MAX_CARRUSELES);
   } else {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-      if (Array.isArray(saved) && saved.length > 0 && saved.every((x) => IDS.includes(x))) {
-        carruseles = saved.slice(0, MAX_CARRUSELES);
+      if (Array.isArray(saved) && saved.length > 0 && saved.every((x) => x && IDS.includes(x.id))) {
+        carruseles = saved.slice(0, MAX_CARRUSELES).map((x) => ({ id: x.id, tam: tamValido(x.tam) }));
       }
     } catch (e) { /* */ }
   }
@@ -56,9 +67,11 @@
     caja.innerHTML = '';
     caja.classList.toggle('uno', carruseles.length === 1);
 
-    carruseles.forEach((id, i) => {
+    carruseles.forEach((tile, i) => {
+      const id = tile.id;
+      const tam = tamValido(tile.tam);
       const c = document.createElement('div');
-      c.className = 'carrusel';
+      c.className = `carrusel t-${tam}`;
       c.setAttribute('data-i', i);
       const opciones = TARJETAS.map((x) =>
         `<option value="${x[0]}"${x[0] === id ? ' selected' : ''}>${esc(x[1])}</option>`
@@ -68,6 +81,7 @@
         `<button data-car="prev" title="Anterior">‹</button>` +
         `<select class="car-sel" data-car="sel">${opciones}</select>` +
         `<span class="car-pos">${IDS.indexOf(id) + 1}/${IDS.length}</span>` +
+        `<button data-car="tam" class="car-tam" title="Cambiar tamaño (${tam})">⤢</button>` +
         `<button data-car="next" title="Siguiente">›</button>` +
         `</div><div class="car-cuerpo"></div><div class="car-puntos">` +
         IDS.map((x) => `<i data-dot="${x}" class="${x === id ? 'sel' : ''}"></i>`).join('') +
@@ -85,20 +99,30 @@
   }
 
   function mostrarEn(i, id, dir) {
-    const otro = carruseles.indexOf(id);
+    const otro = carruseles.findIndex((t) => t.id === id);
     if (otro === i) return;
-    if (otro >= 0) carruseles[otro] = carruseles[i];
-    carruseles[i] = id;
+    if (otro >= 0) carruseles[otro].id = carruseles[i].id;
+    carruseles[i].id = id;
     guardarCarruseles();
     armarCarruseles({ i, dir: dir || 1 });
   }
 
   function moverCarrusel(i, dir) {
-    let k = IDS.indexOf(carruseles[i]);
+    const activos = carruseles.map((t) => t.id);
+    let k = IDS.indexOf(carruseles[i].id);
     for (let n = 0; n < IDS.length; n++) {
       k = (k + dir + IDS.length) % IDS.length;
-      if (!carruseles.includes(IDS[k])) return mostrarEn(i, IDS[k], dir);
+      if (!activos.includes(IDS[k])) return mostrarEn(i, IDS[k], dir);
     }
+  }
+
+  function ciclarTamano(i) {
+    const cur = tamValido(carruseles[i].tam);
+    const sig = TAMS[(TAMS.indexOf(cur) + 1) % TAMS.length];
+    carruseles[i].tam = sig;
+    guardarCarruseles();
+    armarCarruseles();
+    mostrarToast(`Tamaño del panel: ${sig}`);
   }
 
   document.addEventListener('click', (e) => {
@@ -106,7 +130,7 @@
     if (dot) {
       const i = Number(dot.closest('.carrusel').getAttribute('data-i'));
       const id = dot.getAttribute('data-dot');
-      mostrarEn(i, id, IDS.indexOf(id) >= IDS.indexOf(carruseles[i]) ? 1 : -1);
+      mostrarEn(i, id, IDS.indexOf(id) >= IDS.indexOf(carruseles[i].id) ? 1 : -1);
       return;
     }
     const carBtn = e.target.closest && e.target.closest('[data-car]');
@@ -115,6 +139,7 @@
       const que = carBtn.getAttribute('data-car');
       if (que === 'prev') moverCarrusel(i, -1);
       else if (que === 'next') moverCarrusel(i, 1);
+      else if (que === 'tam') ciclarTamano(i);
       else if (que === 'quitar' && carruseles.length > 1) {
         carruseles.splice(i, 1);
         guardarCarruseles();
@@ -139,7 +164,7 @@
     if (!e.target || e.target.getAttribute('data-car') !== 'sel') return;
     const i = Number(e.target.closest('.carrusel').getAttribute('data-i'));
     const val = e.target.value;
-    mostrarEn(i, val, IDS.indexOf(val) >= IDS.indexOf(carruseles[i]) ? 1 : -1);
+    mostrarEn(i, val, IDS.indexOf(val) >= IDS.indexOf(carruseles[i].id) ? 1 : -1);
   });
 
   let arrastre = null;
@@ -158,9 +183,10 @@
 
   function agregarPanel() {
     if (carruseles.length >= MAX_CARRUSELES) return;
-    const libre = IDS.find((x) => !carruseles.includes(x));
+    const activos = carruseles.map((t) => t.id);
+    const libre = IDS.find((x) => !activos.includes(x));
     if (!libre) return;
-    carruseles.push(libre);
+    carruseles.push({ id: libre, tam: '1x1' });
     guardarCarruseles();
     armarCarruseles();
   }
@@ -171,7 +197,7 @@
     armarCarruseles();
   }
   function restablecerPaneles() {
-    carruseles = INICIO.slice();
+    carruseles = clonarInicio();
     guardarCarruseles();
     armarCarruseles();
   }

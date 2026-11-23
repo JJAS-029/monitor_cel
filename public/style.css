@@ -242,11 +242,13 @@ button:active {
   flex: 1;
   min-height: 0;
   padding: 9px 11px 11px;
-  justify-content: space-between;
+  gap: 6px;
 }
 #lienzo {
   width: 100%;
-  height: 122px;
+  flex: 1 1 auto;
+  min-height: 108px;
+  height: auto;
   display: block;
   cursor: pointer;
   image-rendering: pixelated;
@@ -1158,8 +1160,8 @@ code {
   .reloj-der { gap: 2px; }
   .icon-btn { width: 28px; height: 28px; font-size: 12px; }
   .clima-mini { font-size: 11px; padding: 3px 7px; }
-  .koala-card { padding: 6px 8px 7px; gap: 3px; }
-  #lienzo { height: 90px; border-radius: 14px; }
+  .koala-card { padding: 6px 8px 7px; gap: 4px; }
+  #lienzo { min-height: 98px; border-radius: 14px; }
   #estado { font-size: 10.5px; min-height: 13px; }
   .fila { font-size: 10.5px; gap: 5px; margin: 0; }
   .fila .barra { height: 10px; }
